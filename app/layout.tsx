@@ -44,6 +44,16 @@ const clerkAppearance: React.ComponentProps<typeof ClerkProvider>["appearance"] 
     borderRadius: "0.5rem",
     fontFamily: "var(--font-geist-sans), system-ui, sans-serif",
   },
+  // Clerk's supported switch for the "Development mode" warnings.
+  options: {
+    unsafe_disableDevelopmentModeWarnings: true,
+  },
+  // Hide the card/popover footers (the "Secured by Clerk" strip). Sign-up
+  // still works via the combined sign-in-or-up flow.
+  elements: {
+    footer: "hidden",
+    userButtonPopoverFooter: "hidden",
+  },
 };
 
 export default function RootLayout({
