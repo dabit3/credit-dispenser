@@ -1,4 +1,5 @@
 import BrandMark from "@/components/BrandMark";
+import DevinCredit from "@/components/DevinCredit";
 
 export default function SiteFooter() {
   return (
@@ -8,6 +9,7 @@ export default function SiteFooter() {
           <BrandMark className="size-4" />
           <span className="eyebrow">Credit—Dispenser</span>
         </span>
+        <DevinCredit />
       </div>
     </footer>
   );

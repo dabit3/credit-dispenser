@@ -3,6 +3,7 @@ import { UserButton } from "@clerk/nextjs";
 import AdminGate from "@/components/AdminGate";
 import AdminNav from "@/components/AdminNav";
 import BrandMark from "@/components/BrandMark";
+import DevinCredit from "@/components/DevinCredit";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
@@ -42,7 +43,7 @@ export default function AdminLayout({
       <footer className="border-t border-border">
         <div className="mx-auto flex h-12 max-w-5xl items-center justify-between px-6">
           <span className="eyebrow text-muted-dim">Control room</span>
-          <span className="eyebrow text-muted-dim">Credit—Dispenser</span>
+          <DevinCredit />
         </div>
       </footer>
     </div>
