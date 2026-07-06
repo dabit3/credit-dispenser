@@ -42,7 +42,7 @@ export default function AdminDashboard() {
       <div className="mb-10 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Events</h1>
-          <p className="mt-1 text-sm text-muted">
+          <p className="mt-1 text-sm text-muted-foreground">
             Create events and manage their emails and codes.
           </p>
         </div>
@@ -109,7 +109,7 @@ export default function AdminDashboard() {
               />
             </div>
           </div>
-          {error ? <p className="mt-4 text-sm text-muted">{error}</p> : null}
+          {error ? <p className="mt-4 text-sm text-muted-foreground">{error}</p> : null}
           <button
             type="submit"
             disabled={submitting}
@@ -130,7 +130,7 @@ export default function AdminDashboard() {
           ))}
         </div>
       ) : events.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border-strong p-12 text-center text-sm text-muted">
+        <div className="rounded-lg border border-dashed border-border-strong p-12 text-center text-sm text-muted-foreground">
           No events yet. Create your first event to get started.
         </div>
       ) : (

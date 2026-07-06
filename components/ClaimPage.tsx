@@ -48,26 +48,26 @@ export default function ClaimPage({ slug }: { slug: string }) {
             <h1 className="text-2xl font-semibold tracking-tight">
               Event not found
             </h1>
-            <p className="mt-2 text-sm text-muted">
+            <p className="mt-2 text-sm text-muted-foreground">
               There is no event at <span className="font-mono">/{slug}</span>.
             </p>
           </div>
         ) : (
           <div>
             <div className="mb-10 text-center">
-              <div className="mb-4 inline-block rounded-full border border-border px-3 py-1 font-mono text-xs text-muted">
+              <div className="mb-4 inline-block rounded-full border border-border px-3 py-1 font-mono text-xs text-muted-foreground">
                 /{event.slug}
               </div>
               <h1 className="text-3xl font-semibold tracking-tight">
                 {event.name}
               </h1>
               {event.description ? (
-                <p className="mt-3 text-sm leading-relaxed text-muted">
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                   {event.description}
                 </p>
               ) : null}
               {event.creditAmount ? (
-                <p className="mt-3 text-sm text-muted">
+                <p className="mt-3 text-sm text-muted-foreground">
                   Credit: <span className="text-foreground">{event.creditAmount}</span>
                 </p>
               ) : null}
@@ -75,7 +75,7 @@ export default function ClaimPage({ slug }: { slug: string }) {
 
             {result?.ok ? (
               <div className="rounded-lg border border-border bg-surface p-8 text-center">
-                <p className="text-sm text-muted">
+                <p className="text-sm text-muted-foreground">
                   {result.alreadyClaimed
                     ? "You already claimed a code. Here it is again:"
                     : "Your credit code:"}
@@ -85,7 +85,7 @@ export default function ClaimPage({ slug }: { slug: string }) {
                 </div>
                 <button
                   onClick={() => copyCode(result.code)}
-                  className="mt-4 rounded-md border border-border-strong px-4 py-2 text-sm text-muted transition-colors hover:border-foreground hover:text-foreground"
+                  className="mt-4 rounded-md border border-border-strong px-4 py-2 text-sm text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
                 >
                   {copied ? "Copied" : "Copy code"}
                 </button>
@@ -101,7 +101,7 @@ export default function ClaimPage({ slug }: { slug: string }) {
                 >
                   Enter your email to claim your code
                 </label>
-                <p className="mt-1 text-xs text-muted">
+                <p className="mt-1 text-xs text-muted-foreground">
                   Use the email address you registered with.
                 </p>
                 <input
@@ -114,7 +114,7 @@ export default function ClaimPage({ slug }: { slug: string }) {
                   className="mt-4 w-full rounded-md border border-border-strong bg-background px-3 py-2.5 text-sm outline-none transition-colors placeholder:text-muted-dim focus:border-foreground"
                 />
                 {result && !result.ok ? (
-                  <p className="mt-3 text-sm text-muted">{result.error}</p>
+                  <p className="mt-3 text-sm text-muted-foreground">{result.error}</p>
                 ) : null}
                 <button
                   type="submit"

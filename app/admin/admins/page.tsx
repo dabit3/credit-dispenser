@@ -47,13 +47,13 @@ export default function AdminsPage() {
     <div>
       <div className="mb-10">
         <h1 className="text-2xl font-semibold tracking-tight">Admins</h1>
-        <p className="mt-1 text-sm text-muted">
+        <p className="mt-1 text-sm text-muted-foreground">
           Only these emails can access the admin dashboard and manage events.
         </p>
       </div>
 
       {admins !== undefined && admins.length === 0 ? (
-        <div className="mb-6 rounded-lg border border-dashed border-border-strong p-4 text-sm text-muted">
+        <div className="mb-6 rounded-lg border border-dashed border-border-strong p-4 text-sm text-muted-foreground">
           The admin list is empty, so <strong>any signed-in user</strong>{" "}
           currently has admin access. Add your own email to lock it down.
         </div>
@@ -77,7 +77,7 @@ export default function AdminsPage() {
         </button>
       </form>
 
-      {error ? <p className="mb-6 text-sm text-muted">{error}</p> : null}
+      {error ? <p className="mb-6 text-sm text-muted-foreground">{error}</p> : null}
 
       {admins === undefined ? (
         <div className="space-y-3">
@@ -98,7 +98,7 @@ export default function AdminsPage() {
               <span className="flex items-center gap-3">
                 <span className="font-mono text-sm">{admin.email}</span>
                 {admin.isSelf ? (
-                  <span className="rounded-full border border-border px-2 py-0.5 text-xs text-muted">
+                  <span className="rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground">
                     you
                   </span>
                 ) : null}

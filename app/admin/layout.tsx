@@ -18,20 +18,20 @@ export default function AdminLayout({
                 Credit Dispenser
               </span>
             </Link>
-            <span className="rounded-full border border-border px-2.5 py-0.5 text-xs text-muted">
+            <span className="rounded-full border border-border px-2.5 py-0.5 text-xs text-muted-foreground">
               Admin
             </span>
           </div>
           <div className="flex items-center gap-6">
             <Link
               href="/admin"
-              className="text-sm text-muted transition-colors hover:text-foreground"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
               Events
             </Link>
             <Link
               href="/admin/admins"
-              className="text-sm text-muted transition-colors hover:text-foreground"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
               Admins
             </Link>

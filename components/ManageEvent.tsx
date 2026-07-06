@@ -6,11 +6,14 @@ import { useRouter } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
+import { fileToItems } from "@/lib/spreadsheet";
 
 const inputClass =
   "mt-1.5 w-full rounded-md border border-border-strong bg-background px-3 py-2 text-sm outline-none placeholder:text-muted-dim focus:border-foreground";
 const primaryButtonClass =
   "rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-50";
+
+const UPLOAD_CHUNK_SIZE = 500;
 
 export default function ManageEvent({ id }: { id: Id<"events"> }) {
   const event = useQuery(api.events.get, { id });
@@ -25,6 +28,8 @@ export default function ManageEvent({ id }: { id: Id<"events"> }) {
   const [codeInput, setCodeInput] = useState("");
   const [emailStatus, setEmailStatus] = useState<string | null>(null);
   const [codeStatus, setCodeStatus] = useState<string | null>(null);
+  const [emailUploading, setEmailUploading] = useState(false);
+  const [codeUploading, setCodeUploading] = useState(false);
 
   if (event === undefined) {
     return (
@@ -32,7 +37,7 @@ export default function ManageEvent({ id }: { id: Id<"events"> }) {
     );
   }
   if (event === null) {
-    return <p className="text-sm text-muted">Event not found.</p>;
+    return <p className="text-sm text-muted-foreground">Event not found.</p>;
   }
 
   const claimedCount = codes?.filter((c) => c.claimedBy).length ?? 0;
@@ -55,6 +60,59 @@ export default function ManageEvent({ id }: { id: Id<"events"> }) {
     setCodeInput("");
   }
 
+  async function importFile(
+    file: File,
+    kind: "emails" | "codes",
+    send: (items: string[]) => Promise<{ added: number; skipped: number }>,
+    setStatus: (status: string | null) => void,
+    setUploading: (uploading: boolean) => void,
+    skipNote: string
+  ) {
+    setUploading(true);
+    try {
+      const items = await fileToItems(file, kind);
+      if (items.length === 0) {
+        setStatus(`Nothing to import found in ${file.name}.`);
+        return;
+      }
+      let added = 0;
+      let skipped = 0;
+      for (let i = 0; i < items.length; i += UPLOAD_CHUNK_SIZE) {
+        setStatus(`Uploading ${i + 1}–${Math.min(i + UPLOAD_CHUNK_SIZE, items.length)} of ${items.length}...`);
+        const res = await send(items.slice(i, i + UPLOAD_CHUNK_SIZE));
+        added += res.added;
+        skipped += res.skipped;
+      }
+      setStatus(`Added ${added}, skipped ${skipped} ${skipNote} from ${file.name}.`);
+    } catch {
+      setStatus(`Could not read ${file.name}. Upload a .csv or .xlsx file, or try again.`);
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function handleEmailFile(file: File) {
+    void importFile(
+      file,
+      "emails",
+      (emails) => addEmails({ eventId: id, emails }),
+      setEmailStatus,
+      setEmailUploading,
+      "(duplicates/invalid)"
+    );
+  }
+
+  function handleCodeFile(file: File) {
+    void importFile(
+      file,
+      "codes",
+      (codes) => addCodes({ eventId: id, codes }),
+      setCodeStatus,
+      setCodeUploading,
+      "(duplicates)"
+    );
+  }
+
   return (
     <div>
       <div className="mb-8 flex items-center justify-between">
@@ -71,7 +129,7 @@ export default function ManageEvent({ id }: { id: Id<"events"> }) {
         </div>
         <Link
           href={`/${event.slug}`}
-          className="rounded-md border border-border-strong px-4 py-2 font-mono text-xs text-muted transition-colors hover:border-foreground hover:text-foreground"
+          className="rounded-md border border-border-strong px-4 py-2 font-mono text-xs text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
         >
           /{event.slug} ↗
         </Link>
@@ -80,15 +138,15 @@ export default function ManageEvent({ id }: { id: Id<"events"> }) {
       <div className="mb-8 grid grid-cols-3 gap-3">
         <div className="rounded-lg border border-border bg-surface p-4">
           <div className="text-2xl font-semibold">{emails?.length ?? "—"}</div>
-          <div className="mt-1 text-xs text-muted">Eligible emails</div>
+          <div className="mt-1 text-xs text-muted-foreground">Eligible emails</div>
         </div>
         <div className="rounded-lg border border-border bg-surface p-4">
           <div className="text-2xl font-semibold">{codes?.length ?? "—"}</div>
-          <div className="mt-1 text-xs text-muted">Codes</div>
+          <div className="mt-1 text-xs text-muted-foreground">Codes</div>
         </div>
         <div className="rounded-lg border border-border bg-surface p-4">
           <div className="text-2xl font-semibold">{codes ? claimedCount : "—"}</div>
-          <div className="mt-1 text-xs text-muted">Claimed</div>
+          <div className="mt-1 text-xs text-muted-foreground">Claimed</div>
         </div>
       </div>
 
@@ -96,9 +154,12 @@ export default function ManageEvent({ id }: { id: Id<"events"> }) {
 
       <div className="grid gap-8 lg:grid-cols-2">
         <section className="rounded-lg border border-border bg-surface p-6">
-          <h2 className="text-sm font-medium tracking-tight">
-            Eligible emails
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-medium tracking-tight">
+              Eligible emails
+            </h2>
+            <UploadButton uploading={emailUploading} onFile={handleEmailFile} />
+          </div>
           <form onSubmit={handleAddEmails} className="mt-4">
             <textarea
               value={emailInput}
@@ -108,7 +169,7 @@ export default function ManageEvent({ id }: { id: Id<"events"> }) {
               className={`${inputClass} resize-y font-mono`}
             />
             {emailStatus ? (
-              <p className="mt-2 text-xs text-muted">{emailStatus}</p>
+              <p className="mt-2 text-xs text-muted-foreground">{emailStatus}</p>
             ) : null}
             <button type="submit" className={`${primaryButtonClass} mt-3`}>
               Add emails
@@ -136,7 +197,10 @@ export default function ManageEvent({ id }: { id: Id<"events"> }) {
         </section>
 
         <section className="rounded-lg border border-border bg-surface p-6">
-          <h2 className="text-sm font-medium tracking-tight">Codes</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-medium tracking-tight">Codes</h2>
+            <UploadButton uploading={codeUploading} onFile={handleCodeFile} />
+          </div>
           <form onSubmit={handleAddCodes} className="mt-4">
             <textarea
               value={codeInput}
@@ -146,7 +210,7 @@ export default function ManageEvent({ id }: { id: Id<"events"> }) {
               className={`${inputClass} resize-y font-mono`}
             />
             {codeStatus ? (
-              <p className="mt-2 text-xs text-muted">{codeStatus}</p>
+              <p className="mt-2 text-xs text-muted-foreground">{codeStatus}</p>
             ) : null}
             <button type="submit" className={`${primaryButtonClass} mt-3`}>
               Add codes
@@ -182,6 +246,35 @@ export default function ManageEvent({ id }: { id: Id<"events"> }) {
         </section>
       </div>
     </div>
+  );
+}
+
+function UploadButton({
+  uploading,
+  onFile,
+}: {
+  uploading: boolean;
+  onFile: (file: File) => void;
+}) {
+  return (
+    <label
+      className={`cursor-pointer rounded-md border border-border-strong px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-foreground hover:text-foreground ${
+        uploading ? "pointer-events-none opacity-50" : ""
+      }`}
+    >
+      {uploading ? "Uploading..." : "Upload CSV/XLSX"}
+      <input
+        type="file"
+        accept=".csv,.txt,.xlsx,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        className="hidden"
+        disabled={uploading}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          e.target.value = "";
+          if (file) onFile(file);
+        }}
+      />
+    </label>
   );
 }
 
@@ -230,7 +323,7 @@ function EventDetailsForm({ event }: { event: Doc<"events"> }) {
       <h2 className="text-sm font-medium tracking-tight">Event details</h2>
       <div className="mt-4 grid gap-5 sm:grid-cols-2">
         <div>
-          <label className="block text-sm text-muted">Name</label>
+          <label className="block text-sm text-muted-foreground">Name</label>
           <input
             required
             value={name}
@@ -239,7 +332,7 @@ function EventDetailsForm({ event }: { event: Doc<"events"> }) {
           />
         </div>
         <div>
-          <label className="block text-sm text-muted">Slug</label>
+          <label className="block text-sm text-muted-foreground">Slug</label>
           <input
             required
             value={slug}
@@ -248,7 +341,7 @@ function EventDetailsForm({ event }: { event: Doc<"events"> }) {
           />
         </div>
         <div>
-          <label className="block text-sm text-muted">Description</label>
+          <label className="block text-sm text-muted-foreground">Description</label>
           <input
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -256,7 +349,7 @@ function EventDetailsForm({ event }: { event: Doc<"events"> }) {
           />
         </div>
         <div>
-          <label className="block text-sm text-muted">Credit amount</label>
+          <label className="block text-sm text-muted-foreground">Credit amount</label>
           <input
             value={creditAmount}
             onChange={(e) => setCreditAmount(e.target.value)}
@@ -265,7 +358,7 @@ function EventDetailsForm({ event }: { event: Doc<"events"> }) {
           />
         </div>
       </div>
-      {saveError ? <p className="mt-4 text-sm text-muted">{saveError}</p> : null}
+      {saveError ? <p className="mt-4 text-sm text-muted-foreground">{saveError}</p> : null}
       <div className="mt-5 flex items-center gap-4">
         <button type="submit" className={primaryButtonClass}>
           {saved ? "Saved" : "Save changes"}

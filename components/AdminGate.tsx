@@ -28,7 +28,7 @@ export default function AdminGate({ children }: { children: ReactNode }) {
     return (
       <div className="rounded-lg border border-dashed border-border-strong p-12 text-center">
         <p className="text-sm font-medium">Not an admin</p>
-        <p className="mt-2 text-sm text-muted">
+        <p className="mt-2 text-sm text-muted-foreground">
           {email ? (
             <>
               You&apos;re signed in as{" "}

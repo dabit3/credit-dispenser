@@ -10,7 +10,7 @@ export default function SiteHeader({ admin = false }: { admin?: boolean }) {
             Credit Dispenser
           </span>
         </Link>
-        <nav className="flex items-center gap-6 text-sm text-muted">
+        <nav className="flex items-center gap-6 text-sm text-muted-foreground">
           {admin ? (
             <Link href="/admin" className="transition-colors hover:text-foreground">
               Admin

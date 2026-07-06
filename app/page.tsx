@@ -14,7 +14,7 @@ export default function Home() {
       <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-16">
         <div className="mb-12">
           <h1 className="text-3xl font-semibold tracking-tight">Events</h1>
-          <p className="mt-2 text-sm text-muted">
+          <p className="mt-2 text-sm text-muted-foreground">
             Select your event to claim your credit code.
           </p>
         </div>
@@ -29,7 +29,7 @@ export default function Home() {
             ))}
           </div>
         ) : events.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-border-strong p-12 text-center text-sm text-muted">
+          <div className="rounded-lg border border-dashed border-border-strong p-12 text-center text-sm text-muted-foreground">
             No events yet.
           </div>
         ) : (
@@ -45,7 +45,7 @@ export default function Home() {
                       {event.name}
                     </div>
                     {event.description ? (
-                      <div className="mt-1 line-clamp-1 text-sm text-muted">
+                      <div className="mt-1 line-clamp-1 text-sm text-muted-foreground">
                         {event.description}
                       </div>
                     ) : null}
