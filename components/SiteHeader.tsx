@@ -1,6 +1,7 @@
 import Link from "next/link";
 import BrandMark from "@/components/BrandMark";
 import HeaderAuth from "@/components/HeaderAuth";
+import { getAppName } from "@/lib/app-name";
 
 export default function SiteHeader() {
   return (
@@ -9,7 +10,7 @@ export default function SiteHeader() {
         <Link href="/" className="group flex items-center gap-2.5">
           <BrandMark className="size-5 transition-transform duration-300 group-hover:-rotate-6" />
           <span className="eyebrow text-foreground transition-colors group-hover:text-brand">
-            Credit—Dispenser
+            {getAppName()}
           </span>
         </Link>
         <nav className="flex items-center gap-2">
