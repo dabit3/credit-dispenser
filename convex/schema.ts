@@ -1,0 +1,27 @@
+import { defineSchema, defineTable } from "convex/server";
+import { v } from "convex/values";
+
+export default defineSchema({
+  events: defineTable({
+    name: v.string(),
+    slug: v.string(),
+    description: v.optional(v.string()),
+    creditAmount: v.optional(v.string()),
+  }).index("by_slug", ["slug"]),
+
+  emails: defineTable({
+    eventId: v.id("events"),
+    email: v.string(),
+  })
+    .index("by_event", ["eventId"])
+    .index("by_event_email", ["eventId", "email"]),
+
+  codes: defineTable({
+    eventId: v.id("events"),
+    code: v.string(),
+    claimedBy: v.optional(v.string()),
+    claimedAt: v.optional(v.number()),
+  })
+    .index("by_event", ["eventId"])
+    .index("by_event_claimedBy", ["eventId", "claimedBy"]),
+});

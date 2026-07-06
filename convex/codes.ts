@@ -1,0 +1,47 @@
+import { mutation, query } from "./_generated/server";
+import { v } from "convex/values";
+import { requireAdmin } from "./events";
+
+export const list = query({
+  args: { eventId: v.id("events") },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+    return await ctx.db
+      .query("codes")
+      .withIndex("by_event", (q) => q.eq("eventId", args.eventId))
+      .collect();
+  },
+});
+
+export const add = mutation({
+  args: { eventId: v.id("events"), codes: v.array(v.string()) },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+    const existing = await ctx.db
+      .query("codes")
+      .withIndex("by_event", (q) => q.eq("eventId", args.eventId))
+      .collect();
+    const existingSet = new Set(existing.map((c) => c.code));
+    let added = 0;
+    let skipped = 0;
+    for (const raw of args.codes) {
+      const code = raw.trim();
+      if (!code || existingSet.has(code)) {
+        skipped++;
+        continue;
+      }
+      existingSet.add(code);
+      await ctx.db.insert("codes", { eventId: args.eventId, code });
+      added++;
+    }
+    return { added, skipped };
+  },
+});
+
+export const remove = mutation({
+  args: { id: v.id("codes") },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+    await ctx.db.delete(args.id);
+  },
+});
