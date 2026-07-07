@@ -1,5 +1,7 @@
+export function isDevin() {
+  return process.env.IS_DEVIN === "true";
+}
+
 export function getAppName() {
-  return process.env.IS_DEVIN === "true"
-    ? "Devin Vending Machine"
-    : "Vending Machine";
+  return isDevin() ? "Devin Vending Machine" : "Vending Machine";
 }
