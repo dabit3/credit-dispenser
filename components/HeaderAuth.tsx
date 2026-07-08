@@ -10,7 +10,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function HeaderAuth() {
   const { isLoading, isAuthenticated } = useConvexAuth();
-  const isAdmin = useQuery(api.admins.isAdmin, isAuthenticated ? {} : "skip");
+  const access = useQuery(
+    api.admins.accessLevel,
+    isAuthenticated ? {} : "skip"
+  );
 
   if (isLoading) {
     return <Skeleton className="h-7 w-20 rounded-md" />;
@@ -33,7 +36,7 @@ export default function HeaderAuth() {
 
   return (
     <div className="flex items-center gap-3">
-      {isAdmin ? (
+      {access?.hasEventAccess ? (
         <Button
           variant="ghost"
           size="sm"

@@ -30,7 +30,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AdminsPage() {
-  const admins = useQuery(api.admins.list);
+  const access = useQuery(api.admins.accessLevel);
+  const admins = useQuery(api.admins.list, access?.isGlobalAdmin ? {} : "skip");
   const addAdmin = useMutation(api.admins.add);
   const removeAdmin = useMutation(api.admins.remove);
 
@@ -58,6 +59,21 @@ export default function AdminsPage() {
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to remove admin");
     }
+  }
+
+  if (access && !access.isGlobalAdmin) {
+    return (
+      <div className="mx-auto max-w-2xl">
+        <Alert>
+          <ShieldAlert />
+          <AlertTitle>Global admins only</AlertTitle>
+          <AlertDescription>
+            This page manages the global admin list. You have event-level
+            access — head back to your events.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
   }
 
   return (

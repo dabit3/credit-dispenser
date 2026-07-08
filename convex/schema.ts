@@ -6,6 +6,14 @@ export default defineSchema({
     email: v.string(),
   }).index("by_email", ["email"]),
 
+  eventAdmins: defineTable({
+    eventId: v.id("events"),
+    email: v.string(),
+  })
+    .index("by_event", ["eventId"])
+    .index("by_email", ["email"])
+    .index("by_event_email", ["eventId", "email"]),
+
   events: defineTable({
     name: v.string(),
     slug: v.string(),

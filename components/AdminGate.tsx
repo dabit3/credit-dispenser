@@ -17,9 +17,12 @@ import {
 export default function AdminGate({ children }: { children: ReactNode }) {
   const { isLoading, isAuthenticated } = useConvexAuth();
   const { user } = useUser();
-  const isAdmin = useQuery(api.admins.isAdmin, isAuthenticated ? {} : "skip");
+  const access = useQuery(
+    api.admins.accessLevel,
+    isAuthenticated ? {} : "skip"
+  );
 
-  if (isLoading || (isAuthenticated && isAdmin === undefined)) {
+  if (isLoading || (isAuthenticated && access === undefined)) {
     return (
       <div className="flex flex-col gap-3">
         <Skeleton className="h-24 rounded-xl" />
@@ -29,7 +32,7 @@ export default function AdminGate({ children }: { children: ReactNode }) {
     );
   }
 
-  if (!isAuthenticated || !isAdmin) {
+  if (!isAuthenticated || !access?.hasEventAccess) {
     const email = user?.primaryEmailAddress?.emailAddress;
     return (
       <Empty className="border border-dashed border-border-strong py-20">
@@ -43,12 +46,13 @@ export default function AdminGate({ children }: { children: ReactNode }) {
               <>
                 You&apos;re signed in as{" "}
                 <span className="font-mono text-foreground">{email}</span>,
-                which isn&apos;t on the admin list.
+                which isn&apos;t an admin of anything.
               </>
             ) : (
-              "Your account isn't on the admin list."
+              "Your account isn't an admin of anything."
             )}{" "}
-            Ask an existing admin to add your email.
+            Ask an existing admin to add your email — globally or to a
+            specific event.
           </EmptyDescription>
         </EmptyHeader>
       </Empty>

@@ -1,6 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import { requireAdmin } from "./admins";
+import { adminEmailStatus, requireAdmin, requireEventAdmin } from "./admins";
 
 function slugify(name: string): string {
   return name
@@ -48,8 +48,39 @@ export const getBySlug = query({
 export const get = query({
   args: { id: v.id("events") },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx);
+    await requireEventAdmin(ctx, args.id);
     return await ctx.db.get(args.id);
+  },
+});
+
+// Dashboard listing: global admins see every event, event admins only theirs.
+export const listManaged = query({
+  args: {},
+  handler: async (ctx) => {
+    const { email, isAdmin } = await adminEmailStatus(ctx);
+    let events;
+    if (isAdmin) {
+      events = await ctx.db.query("events").order("desc").collect();
+    } else {
+      if (!email) return [];
+      const memberships = await ctx.db
+        .query("eventAdmins")
+        .withIndex("by_email", (q) => q.eq("email", email))
+        .collect();
+      const loaded = await Promise.all(
+        memberships.map((m) => ctx.db.get(m.eventId))
+      );
+      events = loaded
+        .filter((event) => event !== null)
+        .sort((a, b) => b._creationTime - a._creationTime);
+    }
+    return events.map((event) => ({
+      _id: event._id,
+      _creationTime: event._creationTime,
+      name: event.name,
+      slug: event.slug,
+      description: event.description,
+    }));
   },
 });
 
@@ -88,7 +119,7 @@ export const update = mutation({
     creditAmount: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx);
+    await requireEventAdmin(ctx, args.id);
     const slug = slugify(args.slug);
     if (!slug) throw new Error("Slug must contain letters or numbers");
     const existing = await ctx.db
@@ -122,6 +153,11 @@ export const remove = mutation({
       .withIndex("by_event", (q) => q.eq("eventId", args.id))
       .collect();
     for (const code of codes) await ctx.db.delete(code._id);
+    const eventAdmins = await ctx.db
+      .query("eventAdmins")
+      .withIndex("by_event", (q) => q.eq("eventId", args.id))
+      .collect();
+    for (const admin of eventAdmins) await ctx.db.delete(admin._id);
     await ctx.db.delete(args.id);
   },
 });

@@ -101,17 +101,12 @@ export default function ClaimPage({ slug }: { slug: string }) {
           ) : (
             <Card className="gap-0 py-0 [--card-spacing:--spacing(6)] sm:[--card-spacing:--spacing(8)]">
               <CardHeader className="gap-4 border-b border-border py-(--card-spacing)">
-                <div className="flex items-center justify-between">
-                  <Badge variant="outline" className="font-mono text-muted-foreground">
-                    /{event.slug}
-                  </Badge>
-                  {event.creditAmount ? (
-                    <span className="eyebrow flex items-center gap-2 text-muted-foreground">
-                      <span className="inline-block size-1.5 rounded-full bg-brand" />
-                      {formatCredits(event.creditAmount)} in credits
-                    </span>
-                  ) : null}
-                </div>
+                {event.creditAmount ? (
+                  <span className="eyebrow flex items-center gap-2 text-muted-foreground">
+                    <span className="inline-block size-1.5 rounded-full bg-brand" />
+                    {formatCredits(event.creditAmount)} in credits
+                  </span>
+                ) : null}
                 <CardTitle className="font-heading text-3xl font-semibold tracking-[-0.02em] text-balance">
                   {event.name}
                 </CardTitle>

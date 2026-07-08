@@ -1,7 +1,8 @@
 import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
 import { v } from "convex/values";
 
-async function adminEmailStatus(ctx: QueryCtx | MutationCtx) {
+export async function adminEmailStatus(ctx: QueryCtx | MutationCtx) {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) return { email: null, isAdmin: false };
   const email = identity.email?.trim().toLowerCase();
@@ -28,11 +29,46 @@ export async function requireAdmin(ctx: QueryCtx | MutationCtx) {
   return identity;
 }
 
+// Global admins pass for any event; otherwise the caller's email must be on
+// the event's admin list. Returns the caller's email.
+export async function requireEventAdmin(
+  ctx: QueryCtx | MutationCtx,
+  eventId: Id<"events">
+) {
+  const { email, isAdmin } = await adminEmailStatus(ctx);
+  if (isAdmin) return email;
+  if (!email) throw new Error("Not authenticated");
+  const match = await ctx.db
+    .query("eventAdmins")
+    .withIndex("by_event_email", (q) =>
+      q.eq("eventId", eventId).eq("email", email)
+    )
+    .unique();
+  if (!match) throw new Error("Not an admin for this event");
+  return email;
+}
+
 export const isAdmin = query({
   args: {},
   handler: async (ctx) => {
     const { isAdmin } = await adminEmailStatus(ctx);
     return isAdmin;
+  },
+});
+
+// Two-tier access summary for the admin UI: global admins see everything,
+// event admins only get the dashboard scoped to their events.
+export const accessLevel = query({
+  args: {},
+  handler: async (ctx) => {
+    const { email, isAdmin } = await adminEmailStatus(ctx);
+    if (isAdmin) return { isGlobalAdmin: true, hasEventAccess: true };
+    if (!email) return { isGlobalAdmin: false, hasEventAccess: false };
+    const anyEventAdmin = await ctx.db
+      .query("eventAdmins")
+      .withIndex("by_email", (q) => q.eq("email", email))
+      .first();
+    return { isGlobalAdmin: false, hasEventAccess: anyEventAdmin !== null };
   },
 });
 

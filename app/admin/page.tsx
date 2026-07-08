@@ -36,7 +36,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 
 export default function AdminDashboard() {
-  const events = useQuery(api.events.list);
+  const events = useQuery(api.events.listManaged);
+  const access = useQuery(api.admins.accessLevel);
+  const isGlobalAdmin = access?.isGlobalAdmin ?? false;
 
   return (
     <div>
@@ -50,10 +52,12 @@ export default function AdminDashboard() {
             Events
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Create events and manage their emails and codes.
+            {isGlobalAdmin
+              ? "Create events and manage their emails and codes."
+              : "Manage the emails and codes of your events."}
           </p>
         </div>
-        <NewEventDialog />
+        {isGlobalAdmin ? <NewEventDialog /> : null}
       </div>
 
       {events === undefined ? (
@@ -70,7 +74,9 @@ export default function AdminDashboard() {
             </EmptyMedia>
             <EmptyTitle>No events yet</EmptyTitle>
             <EmptyDescription>
-              Create your first event to start dispensing codes.
+              {isGlobalAdmin
+                ? "Create your first event to start dispensing codes."
+                : "Events you administer will appear here."}
             </EmptyDescription>
           </EmptyHeader>
         </Empty>

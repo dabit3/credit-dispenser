@@ -7,16 +7,20 @@ import {
   ArrowLeft,
   ArrowUpRight,
   Check,
+  Download,
   Inbox,
+  ShieldCheck,
   Ticket,
   Trash2,
   Upload,
+  UserPlus,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
+import { downloadCsv } from "@/lib/csv";
 import { fileToItems } from "@/lib/spreadsheet";
 import {
   AlertDialog,
@@ -47,6 +51,12 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
@@ -58,6 +68,7 @@ export default function ManageEvent({ id }: { id: Id<"events"> }) {
   const event = useQuery(api.events.get, { id });
   const emails = useQuery(api.emails.list, { eventId: id });
   const codes = useQuery(api.codes.list, { eventId: id });
+  const access = useQuery(api.admins.accessLevel);
   const addEmails = useMutation(api.emails.add);
   const removeEmail = useMutation(api.emails.remove);
   const addCodes = useMutation(api.codes.add);
@@ -110,6 +121,26 @@ export default function ManageEvent({ id }: { id: Id<"events"> }) {
       description: skipped ? `Skipped ${skipped} (duplicates).` : undefined,
     });
     setCodeInput("");
+  }
+
+  function exportEmails() {
+    if (!emails || !event) return;
+    downloadCsv(`${event.slug}-emails.csv`, [
+      ["email"],
+      ...emails.map((e) => [e.email]),
+    ]);
+  }
+
+  function exportCodes() {
+    if (!codes || !event) return;
+    downloadCsv(`${event.slug}-codes.csv`, [
+      ["code", "claimed_by", "claimed_at"],
+      ...codes.map((c) => [
+        c.code,
+        c.claimedBy ?? "",
+        c.claimedAt ? new Date(c.claimedAt).toISOString() : "",
+      ]),
+    ]);
   }
 
   async function importFile(
@@ -204,7 +235,11 @@ export default function ManageEvent({ id }: { id: Id<"events"> }) {
         </Card>
       </div>
 
-      <EventDetailsForm key={event._id} event={event} />
+      <EventDetailsForm
+        key={event._id}
+        event={event}
+        canDelete={access?.isGlobalAdmin ?? false}
+      />
 
       <div className="grid gap-8 lg:grid-cols-2">
         <Card>
@@ -216,7 +251,13 @@ export default function ManageEvent({ id }: { id: Id<"events"> }) {
             <CardDescription>
               Only these addresses can claim a code.
             </CardDescription>
-            <CardAction>
+            <CardAction className="flex items-center gap-2">
+              {emails && emails.length > 0 ? (
+                <Button variant="outline" size="sm" onClick={exportEmails}>
+                  <Download data-icon="inline-start" />
+                  Export
+                </Button>
+              ) : null}
               <UploadButton busy={emailBusy} onFile={(f) => importFile(f, "emails", (items) => addEmails({ eventId: id, emails: items }), setEmailBusy)} />
             </CardAction>
           </CardHeader>
@@ -256,7 +297,13 @@ export default function ManageEvent({ id }: { id: Id<"events"> }) {
             <CardDescription>
               Each email is assigned one unclaimed code.
             </CardDescription>
-            <CardAction>
+            <CardAction className="flex items-center gap-2">
+              {codes && codes.length > 0 ? (
+                <Button variant="outline" size="sm" onClick={exportCodes}>
+                  <Download data-icon="inline-start" />
+                  Export
+                </Button>
+              ) : null}
               <UploadButton busy={codeBusy} onFile={(f) => importFile(f, "codes", (items) => addCodes({ eventId: id, codes: items }), setCodeBusy)} />
             </CardAction>
           </CardHeader>
@@ -294,7 +341,89 @@ export default function ManageEvent({ id }: { id: Id<"events"> }) {
           </CardContent>
         </Card>
       </div>
+
+      <EventAdminsCard eventId={id} />
     </div>
+  );
+}
+
+function EventAdminsCard({ eventId }: { eventId: Id<"events"> }) {
+  const admins = useQuery(api.eventAdmins.list, { eventId });
+  const addAdmin = useMutation(api.eventAdmins.add);
+  const removeAdmin = useMutation(api.eventAdmins.remove);
+
+  const [email, setEmail] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleAdd(e: React.FormEvent) {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      await addAdmin({ eventId, email });
+      toast.success(`${email.trim().toLowerCase()} can now manage this event`);
+      setEmail("");
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to add event admin"
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <ShieldCheck className="size-4 text-muted-dim" aria-hidden />
+          Event admins
+        </CardTitle>
+        <CardDescription>
+          These emails can manage this event — its details, emails, and codes.
+          Global admins always have access.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        <form onSubmit={handleAdd} className="max-w-md">
+          <InputGroup>
+            <InputGroupInput
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="organizer@example.com"
+              className="font-mono text-sm"
+            />
+            <InputGroupAddon align="inline-end">
+              <InputGroupButton
+                type="submit"
+                variant="brand"
+                size="xs"
+                disabled={submitting}
+              >
+                <UserPlus data-icon="inline-start" />
+                {submitting ? "Adding..." : "Add"}
+              </InputGroupButton>
+            </InputGroupAddon>
+          </InputGroup>
+        </form>
+        <RowList
+          items={admins?.map((a) => ({
+            key: a._id,
+            label: a.isSelf ? `${a.email} (you)` : a.email,
+            onRemove: () =>
+              removeAdmin({ id: a._id }).catch((err) =>
+                toast.error(
+                  err instanceof Error
+                    ? err.message
+                    : "Failed to remove event admin"
+                )
+              ),
+          }))}
+          emptyText="No event admins yet — only global admins can manage this event."
+        />
+      </CardContent>
+    </Card>
   );
 }
 
@@ -399,7 +528,13 @@ function RowList({
   );
 }
 
-function EventDetailsForm({ event }: { event: Doc<"events"> }) {
+function EventDetailsForm({
+  event,
+  canDelete,
+}: {
+  event: Doc<"events">;
+  canDelete: boolean;
+}) {
   const updateEvent = useMutation(api.events.update);
   const removeEvent = useMutation(api.events.remove);
   const router = useRouter();
@@ -496,28 +631,33 @@ function EventDetailsForm({ event }: { event: Doc<"events"> }) {
                 "Save changes"
               )}
             </Button>
-            <AlertDialog>
-              <AlertDialogTrigger render={<Button variant="destructive" />}>
-                <Trash2 data-icon="inline-start" />
-                Delete event
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete “{event.name}”?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This permanently removes the event along with all of its
-                    eligible emails and codes. Attendees will no longer be able
-                    to claim or re-view their codes.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction variant="destructive" onClick={handleDelete}>
-                    Delete event
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            {canDelete ? (
+              <AlertDialog>
+                <AlertDialogTrigger render={<Button variant="destructive" />}>
+                  <Trash2 data-icon="inline-start" />
+                  Delete event
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete “{event.name}”?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This permanently removes the event along with all of its
+                      eligible emails and codes. Attendees will no longer be
+                      able to claim or re-view their codes.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      variant="destructive"
+                      onClick={handleDelete}
+                    >
+                      Delete event
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            ) : null}
           </div>
         </form>
       </CardContent>
