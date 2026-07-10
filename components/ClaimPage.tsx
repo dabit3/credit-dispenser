@@ -89,7 +89,10 @@ export default function ClaimPage({ slug }: { slug: string }) {
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
-      <main className="flex flex-1 items-center justify-center bg-dotgrid px-6 py-16">
+      <main
+        id="main-content"
+        className="flex flex-1 items-center justify-center bg-dotgrid px-4 py-10 sm:px-6 sm:py-16"
+      >
         <div className="w-full max-w-md">
           {event === undefined ? (
             <Skeleton className="h-80 rounded-xl" />
@@ -136,7 +139,7 @@ export default function ClaimPage({ slug }: { slug: string }) {
                     href={event.eventUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="group flex w-fit items-center gap-1.5 font-mono text-xs text-muted-foreground transition-colors hover:text-brand"
+                    className="group flex w-fit items-center gap-1.5 rounded-sm font-mono text-xs text-muted-foreground transition-colors hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
                   >
                     {urlLabel(event.eventUrl)}
                     <ArrowUpRight
@@ -180,7 +183,7 @@ export default function ClaimPage({ slug }: { slug: string }) {
                       <SignOutButton redirectUrl={`/${slug}`}>
                         <Button
                           variant="ghost"
-                          size="xs"
+                          size="sm"
                           className="shrink-0 text-muted-foreground"
                         >
                           Switch account
@@ -199,6 +202,8 @@ export default function ClaimPage({ slug }: { slug: string }) {
                       disabled={submitting}
                       className="w-full"
                       onClick={handleClaim}
+                      aria-busy={submitting}
+                      aria-live="polite"
                     >
                       {submitting ? (
                         <>
@@ -237,14 +242,17 @@ function Receipt({
   onCopy: (code: string) => void;
 }) {
   return (
-    <div className="receipt-edge rounded-t-xl border border-border bg-surface pb-10">
+    <div
+      className="receipt-edge rounded-t-xl border border-border bg-surface pb-10"
+      role="status"
+    >
       <div className="flex flex-col gap-6 p-6 sm:p-8">
         <div className="flex items-center justify-between">
           <span className="eyebrow text-muted-foreground">
             Code dispensed
           </span>
           <span className="relative flex size-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-60 [animation-duration:2.5s]" />
+            <span className="absolute inline-flex size-full animate-ping rounded-full bg-brand opacity-60 motion-reduce:animate-none [animation-duration:2.5s]" />
             <span className="relative inline-flex size-2 rounded-full bg-brand" />
           </span>
         </div>

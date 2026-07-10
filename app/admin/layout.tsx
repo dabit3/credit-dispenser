@@ -16,33 +16,42 @@ export default function AdminLayout({
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-md">
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-6">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="group flex items-center gap-2.5">
-              <BrandMark className="size-5 transition-transform duration-300 group-hover:-rotate-6" />
-              <span className="eyebrow text-foreground transition-colors group-hover:text-brand">
+        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-3 px-4 sm:px-6">
+          <div className="flex min-w-0 items-center gap-3">
+            <Link
+              href="/"
+              className="group flex min-w-0 items-center gap-2.5 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+            >
+              <BrandMark className="size-5 shrink-0 transition-transform duration-300 group-hover:-rotate-6" />
+              <span className="eyebrow hidden truncate text-foreground transition-colors group-hover:text-brand sm:inline">
                 {getAppName()}
               </span>
             </Link>
             <Badge
               variant="outline"
-              className="eyebrow border-brand/40 text-brand"
+              className="eyebrow shrink-0 border-brand/40 text-brand"
             >
               Admin
             </Badge>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-4">
             <AdminNav />
-            <Separator orientation="vertical" className="!h-5" />
+            <Separator
+              orientation="vertical"
+              className="hidden !h-5 sm:block"
+            />
             <UserButton />
           </div>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-12">
+      <main
+        id="main-content"
+        className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6 sm:py-12"
+      >
         <AdminGate>{children}</AdminGate>
       </main>
       <footer className="border-t border-border">
-        <div className="mx-auto flex h-12 max-w-5xl items-center justify-between px-6">
+        <div className="mx-auto flex h-12 max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
           <span className="eyebrow text-muted-dim">Control room</span>
           <DevinCredit />
         </div>

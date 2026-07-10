@@ -42,7 +42,7 @@ export default function AdminDashboard() {
 
   return (
     <div>
-      <div className="mb-10 flex items-end justify-between gap-6">
+      <div className="mb-10 flex flex-col items-start gap-5 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
         <div>
           <p className="eyebrow flex items-center gap-2 text-muted-foreground">
             <span className="inline-block size-1.5 rounded-full bg-brand" />
@@ -86,7 +86,7 @@ export default function AdminDashboard() {
             <li key={event._id} className="border-b border-border">
               <Link
                 href={`/admin/events/${event._id}`}
-                className="group flex items-center gap-6 px-2 py-5 transition-colors hover:bg-surface sm:px-4"
+                className="group flex items-center gap-6 px-2 py-5 transition-colors hover:bg-surface focus-visible:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/60 sm:px-4"
               >
                 <span className="font-mono text-xs text-muted-dim tabular-nums">
                   {String(index + 1).padStart(2, "0")}
@@ -214,6 +214,7 @@ function NewEventDialog() {
               <FieldLabel htmlFor="event-url">Event URL</FieldLabel>
               <Input
                 id="event-url"
+                type="url"
                 value={eventUrl}
                 onChange={(e) => setEventUrl(e.target.value)}
                 placeholder="https://tokyohackathon.com"
@@ -238,7 +239,12 @@ function NewEventDialog() {
             >
               Cancel
             </Button>
-            <Button type="submit" variant="brand" disabled={submitting}>
+            <Button
+              type="submit"
+              variant="brand"
+              disabled={submitting}
+              aria-busy={submitting}
+            >
               {submitting ? (
                 <>
                   <Spinner data-icon="inline-start" />

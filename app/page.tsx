@@ -21,13 +21,13 @@ export default function Home() {
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         <section className="border-b border-border bg-dotgrid">
-          <div className="mx-auto max-w-5xl px-6 py-20 sm:py-28">
+          <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 sm:py-24">
             <p className="eyebrow text-muted-foreground">
               Event credit distribution
             </p>
-            <h1 className="mt-6 max-w-2xl font-heading text-6xl font-semibold tracking-[-0.03em] text-balance sm:text-7xl">
+            <h1 className="mt-6 max-w-2xl font-heading text-5xl leading-[0.95] font-semibold tracking-[-0.03em] text-balance sm:text-7xl">
               Claim your credits<span className="text-brand">.</span>
             </h1>
             <p className="mt-6 max-w-md text-sm leading-relaxed text-muted-foreground">
@@ -37,7 +37,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="mx-auto w-full max-w-5xl px-6 py-14">
+        <section className="mx-auto w-full max-w-5xl px-4 py-12 sm:px-6 sm:py-14">
           <div className="flex items-baseline justify-between">
             <h2 className="eyebrow text-muted-foreground">Active events</h2>
             {events ? (
@@ -48,9 +48,23 @@ export default function Home() {
           </div>
 
           {events === undefined ? (
-            <div className="mt-6 flex flex-col gap-px">
+            <div
+              className="mt-4 border-t border-border"
+              role="status"
+              aria-label="Loading active events"
+            >
               {[0, 1, 2].map((i) => (
-                <Skeleton key={i} className="h-20 rounded-lg" />
+                <div
+                  key={i}
+                  className="flex items-center gap-6 border-b border-border px-2 py-7 sm:gap-10 sm:px-4"
+                >
+                  <Skeleton className="h-3 w-5 rounded-sm" />
+                  <div className="flex min-w-0 flex-1 flex-col gap-2">
+                    <Skeleton className="h-5 w-2/3 rounded-sm" />
+                    <Skeleton className="h-3 w-1/2 rounded-sm" />
+                  </div>
+                  <Skeleton className="size-4 rounded-sm" />
+                </div>
               ))}
             </div>
           ) : events.length === 0 ? (
@@ -71,7 +85,7 @@ export default function Home() {
                 <li key={event._id} className="border-b border-border">
                   <Link
                     href={`/${event.slug}`}
-                    className="group flex items-center gap-6 px-2 py-7 transition-colors hover:bg-surface sm:gap-10 sm:px-4"
+                    className="group flex items-center gap-6 px-2 py-7 transition-colors hover:bg-surface focus-visible:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/60 sm:gap-10 sm:px-4"
                   >
                     <span className="font-mono text-xs text-muted-dim tabular-nums">
                       {String(index + 1).padStart(2, "0")}

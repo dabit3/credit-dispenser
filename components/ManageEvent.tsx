@@ -201,7 +201,13 @@ export default function ManageEvent({ id }: { id: Id<"events"> }) {
           </h1>
           <Button
             variant="outline"
-            render={<Link href={`/${event.slug}`} target="_blank" />}
+            render={
+              <Link
+                href={`/${event.slug}`}
+                target="_blank"
+                rel="noreferrer"
+              />
+            }
             nativeButton={false}
           >
             <span className="font-mono text-xs">/{event.slug}</span>
@@ -251,7 +257,7 @@ export default function ManageEvent({ id }: { id: Id<"events"> }) {
             <CardDescription>
               Only these addresses can claim a code.
             </CardDescription>
-            <CardAction className="flex items-center gap-2">
+            <CardAction className="col-span-full col-start-1 row-span-1 row-start-3 mt-2 flex w-full flex-wrap items-center gap-2 justify-self-start sm:col-span-1 sm:col-start-2 sm:row-span-2 sm:row-start-1 sm:mt-0 sm:w-auto sm:flex-nowrap sm:justify-self-end">
               {emails && emails.length > 0 ? (
                 <Button variant="outline" size="sm" onClick={exportEmails}>
                   <Download data-icon="inline-start" />
@@ -264,13 +270,19 @@ export default function ManageEvent({ id }: { id: Id<"events"> }) {
           <CardContent className="flex flex-col gap-4">
             <form onSubmit={handleAddEmails} className="flex flex-col gap-3">
               <Textarea
+                aria-label="Email addresses to add"
                 value={emailInput}
                 onChange={(e) => setEmailInput(e.target.value)}
                 rows={4}
                 placeholder={"one@example.com\ntwo@example.com"}
                 className="resize-y font-mono text-sm"
               />
-              <Button type="submit" variant="secondary" className="self-start">
+              <Button
+                type="submit"
+                variant="secondary"
+                className="self-start"
+                disabled={!emailInput.trim()}
+              >
                 Add emails
               </Button>
             </form>
@@ -297,7 +309,7 @@ export default function ManageEvent({ id }: { id: Id<"events"> }) {
             <CardDescription>
               Each email is assigned one unclaimed code.
             </CardDescription>
-            <CardAction className="flex items-center gap-2">
+            <CardAction className="col-span-full col-start-1 row-span-1 row-start-3 mt-2 flex w-full flex-wrap items-center gap-2 justify-self-start sm:col-span-1 sm:col-start-2 sm:row-span-2 sm:row-start-1 sm:mt-0 sm:w-auto sm:flex-nowrap sm:justify-self-end">
               {codes && codes.length > 0 ? (
                 <Button variant="outline" size="sm" onClick={exportCodes}>
                   <Download data-icon="inline-start" />
@@ -310,13 +322,19 @@ export default function ManageEvent({ id }: { id: Id<"events"> }) {
           <CardContent className="flex flex-col gap-4">
             <form onSubmit={handleAddCodes} className="flex flex-col gap-3">
               <Textarea
+                aria-label="Credit codes to add"
                 value={codeInput}
                 onChange={(e) => setCodeInput(e.target.value)}
                 rows={4}
                 placeholder={"CODE-001\nCODE-002"}
                 className="resize-y font-mono text-sm"
               />
-              <Button type="submit" variant="secondary" className="self-start">
+              <Button
+                type="submit"
+                variant="secondary"
+                className="self-start"
+                disabled={!codeInput.trim()}
+              >
                 Add codes
               </Button>
             </form>
@@ -388,6 +406,7 @@ function EventAdminsCard({ eventId }: { eventId: Id<"events"> }) {
           <InputGroup>
             <InputGroupInput
               type="email"
+              aria-label="Event admin email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -400,6 +419,7 @@ function EventAdminsCard({ eventId }: { eventId: Id<"events"> }) {
                 variant="brand"
                 size="xs"
                 disabled={submitting}
+                aria-busy={submitting}
               >
                 <UserPlus data-icon="inline-start" />
                 {submitting ? "Adding..." : "Add"}
@@ -452,6 +472,7 @@ function UploadButton({
       variant="outline"
       size="sm"
       disabled={busy}
+      aria-busy={busy}
       render={<label />}
       nativeButton={false}
     >
@@ -503,21 +524,24 @@ function RowList({
       {items.map((item) => (
         <li
           key={item.key}
-          className="group flex min-h-10 items-center justify-between gap-3 px-3 py-1.5 transition-colors hover:bg-surface"
+          className="flex min-h-10 items-center justify-between gap-3 px-3 py-1.5 transition-colors hover:bg-surface"
         >
           <span className="truncate font-mono text-xs">{item.label}</span>
           {item.claimedBy ? (
-            <Badge variant="secondary" className="shrink-0 font-mono text-[10px]">
+            <Badge
+              variant="secondary"
+              className="max-w-32 shrink-0 truncate font-mono text-[10px] sm:max-w-48"
+            >
               <Check data-icon="inline-start" />
               {item.claimedBy}
             </Badge>
           ) : item.onRemove ? (
             <Button
               variant="ghost"
-              size="icon-xs"
+              size="icon-sm"
               aria-label={`Remove ${item.label}`}
               onClick={item.onRemove}
-              className="shrink-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+              className="shrink-0 text-muted-foreground"
             >
               <X />
             </Button>
@@ -625,6 +649,7 @@ function EventDetailsForm({
               <FieldLabel htmlFor="detail-url">Event URL</FieldLabel>
               <Input
                 id="detail-url"
+                type="url"
                 value={eventUrl}
                 onChange={(e) => setEventUrl(e.target.value)}
                 placeholder="https://tokyohackathon.com"
@@ -636,7 +661,7 @@ function EventDetailsForm({
             </Field>
           </FieldGroup>
           <div className="flex items-center justify-between gap-4">
-            <Button type="submit" disabled={saving}>
+            <Button type="submit" disabled={saving} aria-busy={saving}>
               {saving ? (
                 <>
                   <Spinner data-icon="inline-start" />

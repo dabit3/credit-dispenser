@@ -23,7 +23,7 @@ export default function AdminNav() {
   ];
 
   return (
-    <nav className="flex items-center gap-1">
+    <nav aria-label="Admin" className="flex items-center gap-1">
       {links.map((link) => {
         const active =
           link.href === "/admin"
@@ -35,7 +35,7 @@ export default function AdminNav() {
             href={link.href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "rounded-md px-3 py-1.5 text-sm transition-colors",
+              "rounded-md px-2.5 py-1.5 text-sm whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 sm:px-3",
               active
                 ? "bg-muted text-foreground"
                 : "text-muted-foreground hover:text-foreground"

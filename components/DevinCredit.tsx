@@ -3,10 +3,10 @@
 export default function DevinCredit() {
   return (
     <a
-      href="https://github.com/dabit3/vending-machine"
+      href="https://github.com/dabit3/credit-dispenser"
       target="_blank"
       rel="noreferrer"
-      className="group flex items-center gap-2 text-muted-dim transition-colors hover:text-brand"
+      className="group flex shrink-0 items-center gap-2 rounded-sm text-muted-dim transition-colors hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
     >
       <span className="eyebrow">Built with</span>
       <span

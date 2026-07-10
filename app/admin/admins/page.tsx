@@ -121,6 +121,7 @@ export default function AdminsPage() {
                 variant="brand"
                 size="xs"
                 disabled={submitting}
+                aria-busy={submitting}
               >
                 <UserPlus data-icon="inline-start" />
                 {submitting ? "Adding..." : "Add"}
@@ -140,7 +141,7 @@ export default function AdminsPage() {
           {admins.map((admin) => (
             <li
               key={admin._id}
-              className="group flex min-h-12 items-center justify-between gap-3 px-4 py-2"
+              className="flex min-h-12 items-center justify-between gap-3 px-4 py-2 transition-colors hover:bg-surface"
             >
               <span className="flex min-w-0 items-center gap-3">
                 <span className="truncate font-mono text-sm">{admin.email}</span>
@@ -159,9 +160,9 @@ export default function AdminsPage() {
                     render={
                       <Button
                         variant="ghost"
-                        size="icon-xs"
+                        size="icon-sm"
                         aria-label={`Remove ${admin.email}`}
-                        className="shrink-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+                        className="shrink-0 text-muted-foreground"
                       />
                     }
                   >
@@ -189,10 +190,10 @@ export default function AdminsPage() {
               ) : (
                 <Button
                   variant="ghost"
-                  size="icon-xs"
+                  size="icon-sm"
                   aria-label={`Remove ${admin.email}`}
                   onClick={() => handleRemove(admin._id)}
-                  className="shrink-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+                  className="shrink-0 text-muted-foreground"
                 >
                   <X />
                 </Button>

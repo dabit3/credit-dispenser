@@ -57,13 +57,19 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${bricolage.variable} h-full antialiased`}
         suppressHydrationWarning
       >
-        <body className="min-h-full flex flex-col">
+        <body className="flex min-h-full flex-col">
           <ThemeProvider
             attribute="class"
             defaultTheme="dark"
             enableSystem
             disableTransitionOnChange
           >
+            <a
+              href="#main-content"
+              className="fixed top-3 left-3 z-50 -translate-y-20 rounded-md bg-foreground px-3 py-2 text-sm font-medium text-background transition-transform focus:translate-y-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            >
+              Skip to content
+            </a>
             <ConvexClientProvider>{children}</ConvexClientProvider>
             <Toaster />
           </ThemeProvider>
