@@ -55,7 +55,6 @@ export const getBySlug = query({
       name: event.name,
       slug: event.slug,
       description: event.description,
-      creditAmount: event.creditAmount,
       eventUrl: event.eventUrl,
     };
   },

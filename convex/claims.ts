@@ -47,7 +47,12 @@ export const claim = mutation({
       )
       .unique();
     if (alreadyClaimed) {
-      return { ok: true as const, code: alreadyClaimed.code, alreadyClaimed: true };
+      return {
+        ok: true as const,
+        code: alreadyClaimed.code,
+        alreadyClaimed: true,
+        creditAmount: event.creditAmount,
+      };
     }
 
     const available = await ctx.db
@@ -67,6 +72,11 @@ export const claim = mutation({
       claimedBy: email,
       claimedAt: Date.now(),
     });
-    return { ok: true as const, code: available.code, alreadyClaimed: false };
+    return {
+      ok: true as const,
+      code: available.code,
+      alreadyClaimed: false,
+      creditAmount: event.creditAmount,
+    };
   },
 });
