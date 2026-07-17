@@ -27,6 +27,16 @@ function normalizeUrl(raw?: string): string | undefined {
   return withProtocol;
 }
 
+// Empty -> undefined; expects YYYY-MM-DD from the date input.
+function normalizeEventDate(raw?: string): string | undefined {
+  const trimmed = raw?.trim();
+  if (!trimmed) return undefined;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed) || isNaN(Date.parse(trimmed))) {
+    throw new Error("Enter a valid event date");
+  }
+  return trimmed;
+}
+
 export const list = query({
   args: {},
   handler: async (ctx) => {
@@ -37,6 +47,7 @@ export const list = query({
       name: event.name,
       slug: event.slug,
       description: event.description,
+      eventDate: event.eventDate,
     }));
   },
 });
@@ -56,6 +67,7 @@ export const getBySlug = query({
       slug: event.slug,
       description: event.description,
       eventUrl: event.eventUrl,
+      eventDate: event.eventDate,
     };
   },
 });
@@ -106,6 +118,7 @@ export const create = mutation({
     description: v.optional(v.string()),
     creditAmount: v.optional(v.string()),
     eventUrl: v.optional(v.string()),
+    eventDate: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
@@ -122,6 +135,7 @@ export const create = mutation({
       description: args.description?.trim() || undefined,
       creditAmount: args.creditAmount?.trim() || undefined,
       eventUrl: normalizeUrl(args.eventUrl),
+      eventDate: normalizeEventDate(args.eventDate),
     });
     return { id, slug };
   },
@@ -135,6 +149,7 @@ export const update = mutation({
     description: v.optional(v.string()),
     creditAmount: v.optional(v.string()),
     eventUrl: v.optional(v.string()),
+    eventDate: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     await requireEventAdmin(ctx, args.id);
@@ -153,6 +168,7 @@ export const update = mutation({
       description: args.description?.trim() || undefined,
       creditAmount: args.creditAmount?.trim() || undefined,
       eventUrl: normalizeUrl(args.eventUrl),
+      eventDate: normalizeEventDate(args.eventDate),
     });
     return { slug };
   },

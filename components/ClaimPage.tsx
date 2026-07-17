@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   ArrowUpRight,
   BadgeCheck,
+  CalendarDays,
   Check,
   Copy,
   LogIn,
@@ -14,6 +15,7 @@ import { toast } from "sonner";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { SignInButton, SignOutButton, useUser } from "@clerk/nextjs";
 import { api } from "@/convex/_generated/api";
+import { formatEventDate } from "@/lib/event-date";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { Alert, AlertTitle } from "@/components/ui/alert";
@@ -133,19 +135,29 @@ export default function ClaimPage({ slug }: { slug: string }) {
                     {event.description}
                   </CardDescription>
                 ) : null}
-                {event.eventUrl ? (
-                  <a
-                    href={event.eventUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="group flex w-fit items-center gap-1.5 rounded-sm font-mono text-xs text-muted-foreground transition-colors hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
-                  >
-                    {urlLabel(event.eventUrl)}
-                    <ArrowUpRight
-                      className="size-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                      aria-hidden
-                    />
-                  </a>
+                {event.eventDate || event.eventUrl ? (
+                  <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+                    {event.eventDate ? (
+                      <span className="flex items-center gap-1.5 font-mono text-xs text-muted-foreground">
+                        <CalendarDays className="size-3.5" aria-hidden />
+                        {formatEventDate(event.eventDate)}
+                      </span>
+                    ) : null}
+                    {event.eventUrl ? (
+                      <a
+                        href={event.eventUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="group flex w-fit items-center gap-1.5 rounded-sm font-mono text-xs text-muted-foreground transition-colors hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+                      >
+                        {urlLabel(event.eventUrl)}
+                        <ArrowUpRight
+                          className="size-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                          aria-hidden
+                        />
+                      </a>
+                    ) : null}
+                  </div>
                 ) : null}
               </CardHeader>
               <CardContent className="py-(--card-spacing)">

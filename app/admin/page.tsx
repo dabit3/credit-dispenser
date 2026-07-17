@@ -128,6 +128,7 @@ function NewEventDialog() {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
+  const [eventDate, setEventDate] = useState("");
   const [creditAmount, setCreditAmount] = useState("");
   const [eventUrl, setEventUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -142,6 +143,7 @@ function NewEventDialog() {
         name,
         slug: slug || undefined,
         description: description || undefined,
+        eventDate: eventDate || undefined,
         creditAmount: creditAmount || undefined,
         eventUrl: eventUrl || undefined,
       });
@@ -203,6 +205,19 @@ function NewEventDialog() {
                 rows={4}
                 className="resize-y"
               />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="event-date">Event date</FieldLabel>
+              <Input
+                id="event-date"
+                type="date"
+                value={eventDate}
+                onChange={(e) => setEventDate(e.target.value)}
+                className="font-mono"
+              />
+              <FieldDescription>
+                Optional — shown on the home and claim pages.
+              </FieldDescription>
             </Field>
             <Field>
               <FieldLabel htmlFor="event-credit">Credit amount</FieldLabel>

@@ -566,6 +566,7 @@ function EventDetailsForm({
   const [name, setName] = useState(event.name);
   const [slug, setSlug] = useState(event.slug);
   const [description, setDescription] = useState(event.description ?? "");
+  const [eventDate, setEventDate] = useState(event.eventDate ?? "");
   const [creditAmount, setCreditAmount] = useState(event.creditAmount ?? "");
   const [eventUrl, setEventUrl] = useState(event.eventUrl ?? "");
   const [saving, setSaving] = useState(false);
@@ -579,6 +580,7 @@ function EventDetailsForm({
         name,
         slug,
         description: description || undefined,
+        eventDate: eventDate || undefined,
         creditAmount: creditAmount || undefined,
         eventUrl: eventUrl || undefined,
       });
@@ -636,6 +638,19 @@ function EventDetailsForm({
                 rows={4}
                 className="resize-y"
               />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="detail-date">Event date</FieldLabel>
+              <Input
+                id="detail-date"
+                type="date"
+                value={eventDate}
+                onChange={(e) => setEventDate(e.target.value)}
+                className="font-mono"
+              />
+              <FieldDescription>
+                Optional — shown on the home and claim pages.
+              </FieldDescription>
             </Field>
             <Field>
               <FieldLabel htmlFor="detail-credit">Credit amount</FieldLabel>

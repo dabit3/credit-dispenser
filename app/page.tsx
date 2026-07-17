@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowUpRight, Ticket } from "lucide-react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { formatEventDate } from "@/lib/event-date";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -94,6 +95,11 @@ export default function Home() {
                       <div className="font-heading text-xl font-medium tracking-tight transition-colors group-hover:text-brand sm:text-2xl">
                         {event.name}
                       </div>
+                      {event.eventDate ? (
+                        <p className="mt-1 font-mono text-xs text-muted-dim tabular-nums">
+                          {formatEventDate(event.eventDate)}
+                        </p>
+                      ) : null}
                       {event.description ? (
                         <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">
                           {event.description}
