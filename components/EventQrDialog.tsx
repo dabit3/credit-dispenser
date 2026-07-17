@@ -85,7 +85,14 @@ export default function EventQrDialog({
               level="M"
               bgColor="#ffffff"
               fgColor="#000000"
-              className="h-auto w-56 max-w-full"
+              // qrcode.react sets inline width/height to `size`; override via
+              // style (merged last) so the on-screen QR stays square.
+              style={{
+                width: "14rem",
+                height: "auto",
+                maxWidth: "100%",
+                aspectRatio: "1 / 1",
+              }}
             />
           </div>
           <span className="break-all text-center font-mono text-xs text-muted-foreground">
