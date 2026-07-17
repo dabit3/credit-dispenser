@@ -7,6 +7,7 @@ import { ArrowRight, CalendarPlus, OctagonX, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { fromDateTimeLocalValue } from "@/lib/event-schedule";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -129,6 +130,8 @@ function NewEventDialog() {
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
   const [eventDate, setEventDate] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
   const [creditAmount, setCreditAmount] = useState("");
   const [eventUrl, setEventUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -144,6 +147,8 @@ function NewEventDialog() {
         slug: slug || undefined,
         description: description || undefined,
         eventDate: eventDate || undefined,
+        startTime: fromDateTimeLocalValue(startTime),
+        endTime: fromDateTimeLocalValue(endTime),
         creditAmount: creditAmount || undefined,
         eventUrl: eventUrl || undefined,
       });
@@ -217,6 +222,32 @@ function NewEventDialog() {
               />
               <FieldDescription>
                 Optional — shown on the home and claim pages.
+              </FieldDescription>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="event-start">Claim opens</FieldLabel>
+              <Input
+                id="event-start"
+                type="datetime-local"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                className="font-mono"
+              />
+              <FieldDescription>
+                Optional — claims are blocked until this time.
+              </FieldDescription>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="event-end">Claim closes</FieldLabel>
+              <Input
+                id="event-end"
+                type="datetime-local"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+                className="font-mono"
+              />
+              <FieldDescription>
+                Optional — claims are blocked after this time.
               </FieldDescription>
             </Field>
             <Field>

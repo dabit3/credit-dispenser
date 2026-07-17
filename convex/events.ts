@@ -37,6 +37,14 @@ function normalizeEventDate(raw?: string): string | undefined {
   return trimmed;
 }
 
+// Ensures the claim window is coherent: if both bounds are set, the end must
+// come after the start.
+function validateClaimWindow(startTime?: number, endTime?: number): void {
+  if (startTime !== undefined && endTime !== undefined && endTime <= startTime) {
+    throw new Error("Claim window end must be after its start");
+  }
+}
+
 export const list = query({
   args: {},
   handler: async (ctx) => {
@@ -68,6 +76,8 @@ export const getBySlug = query({
       description: event.description,
       eventUrl: event.eventUrl,
       eventDate: event.eventDate,
+      startTime: event.startTime,
+      endTime: event.endTime,
     };
   },
 });
@@ -119,6 +129,8 @@ export const create = mutation({
     creditAmount: v.optional(v.string()),
     eventUrl: v.optional(v.string()),
     eventDate: v.optional(v.string()),
+    startTime: v.optional(v.number()),
+    endTime: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
@@ -129,6 +141,7 @@ export const create = mutation({
       .withIndex("by_slug", (q) => q.eq("slug", slug))
       .unique();
     if (existing) throw new Error(`Slug "${slug}" is already taken`);
+    validateClaimWindow(args.startTime, args.endTime);
     const id = await ctx.db.insert("events", {
       name: args.name.trim(),
       slug,
@@ -136,6 +149,8 @@ export const create = mutation({
       creditAmount: args.creditAmount?.trim() || undefined,
       eventUrl: normalizeUrl(args.eventUrl),
       eventDate: normalizeEventDate(args.eventDate),
+      startTime: args.startTime,
+      endTime: args.endTime,
     });
     return { id, slug };
   },
@@ -150,6 +165,8 @@ export const update = mutation({
     creditAmount: v.optional(v.string()),
     eventUrl: v.optional(v.string()),
     eventDate: v.optional(v.string()),
+    startTime: v.optional(v.number()),
+    endTime: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     await requireEventAdmin(ctx, args.id);
@@ -162,6 +179,7 @@ export const update = mutation({
     if (existing && existing._id !== args.id) {
       throw new Error(`Slug "${slug}" is already taken`);
     }
+    validateClaimWindow(args.startTime, args.endTime);
     await ctx.db.patch(args.id, {
       name: args.name.trim(),
       slug,
@@ -169,6 +187,8 @@ export const update = mutation({
       creditAmount: args.creditAmount?.trim() || undefined,
       eventUrl: normalizeUrl(args.eventUrl),
       eventDate: normalizeEventDate(args.eventDate),
+      startTime: args.startTime,
+      endTime: args.endTime,
     });
     return { slug };
   },
