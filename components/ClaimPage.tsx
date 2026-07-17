@@ -1,24 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowUpRight,
   BadgeCheck,
   CalendarDays,
   Check,
+  Clock,
   Copy,
+  LockKeyhole,
   LogIn,
   OctagonX,
   SearchX,
+  Timer,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { SignInButton, SignOutButton, useUser } from "@clerk/nextjs";
 import { api } from "@/convex/_generated/api";
 import { formatEventDate } from "@/lib/event-date";
+import {
+  type ClaimWindowStatus,
+  formatCountdown,
+  formatDateTime,
+  getWindowStatus,
+} from "@/lib/event-schedule";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
-import { Alert, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -62,6 +71,18 @@ function urlLabel(url: string) {
   }
 }
 
+// Ticks every second while `active`, so countdowns stay live and the window
+// state flips on its own when a boundary is crossed.
+function useNow(active: boolean) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!active) return;
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [active]);
+  return now;
+}
+
 export default function ClaimPage({ slug }: { slug: string }) {
   const event = useQuery(api.events.getBySlug, { slug });
   const claim = useMutation(api.claims.claim);
@@ -70,6 +91,13 @@ export default function ClaimPage({ slug }: { slug: string }) {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<ClaimResult | null>(null);
   const [copied, setCopied] = useState(false);
+
+  const startTime = event?.startTime;
+  const endTime = event?.endTime;
+  const hasWindow = startTime !== undefined || endTime !== undefined;
+  const now = useNow(hasWindow);
+  const windowStatus = getWindowStatus(now, startTime, endTime);
+  const canClaim = windowStatus === "open";
 
   const signedInEmail = user?.primaryEmailAddress?.emailAddress;
 
@@ -160,8 +188,14 @@ export default function ClaimPage({ slug }: { slug: string }) {
                   </div>
                 ) : null}
               </CardHeader>
-              <CardContent className="py-(--card-spacing)">
-                {authLoading ? (
+              <CardContent className="flex flex-col gap-6 py-(--card-spacing)">
+                <ClaimWindow
+                  status={windowStatus}
+                  now={now}
+                  startTime={startTime}
+                  endTime={endTime}
+                />
+                {windowStatus === "closed" ? null : authLoading ? (
                   <div className="flex flex-col gap-3">
                     <Skeleton className="h-12 rounded-md" />
                     <Skeleton className="h-10 rounded-lg" />
@@ -210,7 +244,7 @@ export default function ClaimPage({ slug }: { slug: string }) {
                     <Button
                       variant="brand"
                       size="lg"
-                      disabled={submitting}
+                      disabled={submitting || !canClaim}
                       className="w-full"
                       onClick={handleClaim}
                       aria-busy={submitting}
@@ -221,6 +255,8 @@ export default function ClaimPage({ slug }: { slug: string }) {
                           <Spinner data-icon="inline-start" />
                           Checking the list...
                         </>
+                      ) : !canClaim ? (
+                        "Claiming not open yet"
                       ) : (
                         "Dispense my code"
                       )}
@@ -235,6 +271,62 @@ export default function ClaimPage({ slug }: { slug: string }) {
       <SiteFooter />
     </div>
   );
+}
+
+function ClaimWindow({
+  status,
+  now,
+  startTime,
+  endTime,
+}: {
+  status: ClaimWindowStatus;
+  now: number;
+  startTime?: number;
+  endTime?: number;
+}) {
+  if (status === "before" && startTime !== undefined) {
+    return (
+      <div
+        className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-border-strong bg-background px-5 py-6 text-center"
+        role="timer"
+        aria-live="off"
+      >
+        <span className="eyebrow flex items-center gap-1.5 text-muted-foreground">
+          <Timer className="size-3.5" aria-hidden />
+          Claiming opens in
+        </span>
+        <span className="font-mono text-3xl font-semibold tracking-tight tabular-nums">
+          {formatCountdown(startTime - now)}
+        </span>
+        <span className="text-xs text-muted-dim">
+          {formatDateTime(startTime)}
+        </span>
+      </div>
+    );
+  }
+
+  if (status === "open" && endTime !== undefined) {
+    return (
+      <div className="flex items-center justify-center gap-1.5 font-mono text-xs text-muted-foreground tabular-nums">
+        <Clock className="size-3.5" aria-hidden />
+        <span>Claiming closes in {formatCountdown(endTime - now)}</span>
+      </div>
+    );
+  }
+
+  if (status === "closed") {
+    return (
+      <Alert>
+        <LockKeyhole />
+        <AlertTitle>Claiming has closed for this event.</AlertTitle>
+        {endTime !== undefined ? (
+          <AlertDescription>Closed {formatDateTime(endTime)}.</AlertDescription>
+        ) : null}
+      </Alert>
+    );
+  }
+
+  return null;
 }
 
 function Receipt({

@@ -27,6 +27,20 @@ export const claim = mutation({
       return { ok: false as const, error: "Event not found." };
     }
 
+    const now = Date.now();
+    if (event.startTime !== undefined && now < event.startTime) {
+      return {
+        ok: false as const,
+        error: "Claiming hasn't opened for this event yet.",
+      };
+    }
+    if (event.endTime !== undefined && now > event.endTime) {
+      return {
+        ok: false as const,
+        error: "Claiming has closed for this event.",
+      };
+    }
+
     const allowed = await ctx.db
       .query("emails")
       .withIndex("by_event_email", (q) =>

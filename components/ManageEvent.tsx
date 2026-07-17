@@ -23,6 +23,10 @@ import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { downloadCsv } from "@/lib/csv";
 import { fileToItems } from "@/lib/spreadsheet";
 import {
+  fromDateTimeLocalValue,
+  toDateTimeLocalValue,
+} from "@/lib/event-schedule";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -567,6 +571,10 @@ function EventDetailsForm({
   const [slug, setSlug] = useState(event.slug);
   const [description, setDescription] = useState(event.description ?? "");
   const [eventDate, setEventDate] = useState(event.eventDate ?? "");
+  const [startTime, setStartTime] = useState(
+    toDateTimeLocalValue(event.startTime)
+  );
+  const [endTime, setEndTime] = useState(toDateTimeLocalValue(event.endTime));
   const [creditAmount, setCreditAmount] = useState(event.creditAmount ?? "");
   const [eventUrl, setEventUrl] = useState(event.eventUrl ?? "");
   const [saving, setSaving] = useState(false);
@@ -581,6 +589,8 @@ function EventDetailsForm({
         slug,
         description: description || undefined,
         eventDate: eventDate || undefined,
+        startTime: fromDateTimeLocalValue(startTime),
+        endTime: fromDateTimeLocalValue(endTime),
         creditAmount: creditAmount || undefined,
         eventUrl: eventUrl || undefined,
       });
@@ -650,6 +660,32 @@ function EventDetailsForm({
               />
               <FieldDescription>
                 Optional — shown on the home and claim pages.
+              </FieldDescription>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="detail-start">Claim opens</FieldLabel>
+              <Input
+                id="detail-start"
+                type="datetime-local"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                className="font-mono"
+              />
+              <FieldDescription>
+                Optional — claims are blocked until this time.
+              </FieldDescription>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="detail-end">Claim closes</FieldLabel>
+              <Input
+                id="detail-end"
+                type="datetime-local"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+                className="font-mono"
+              />
+              <FieldDescription>
+                Optional — claims are blocked after this time.
               </FieldDescription>
             </Field>
             <Field>

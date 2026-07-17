@@ -21,6 +21,10 @@ export default defineSchema({
     creditAmount: v.optional(v.string()),
     eventUrl: v.optional(v.string()),
     eventDate: v.optional(v.string()),
+    // Claim window bounds as epoch milliseconds. Claims are only accepted
+    // between startTime and endTime (either may be omitted for an open bound).
+    startTime: v.optional(v.number()),
+    endTime: v.optional(v.number()),
   }).index("by_slug", ["slug"]),
 
   emails: defineTable({
