@@ -22,6 +22,7 @@ import { api } from "@/convex/_generated/api";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { downloadCsv } from "@/lib/csv";
 import { fileToItems } from "@/lib/spreadsheet";
+import EventQrDialog from "@/components/EventQrDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -199,20 +200,23 @@ export default function ManageEvent({ id }: { id: Id<"events"> }) {
           <h1 className="font-heading text-3xl font-semibold tracking-[-0.02em]">
             {event.name}
           </h1>
-          <Button
-            variant="outline"
-            render={
-              <Link
-                href={`/${event.slug}`}
-                target="_blank"
-                rel="noreferrer"
-              />
-            }
-            nativeButton={false}
-          >
-            <span className="font-mono text-xs">/{event.slug}</span>
-            <ArrowUpRight data-icon="inline-end" />
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <EventQrDialog slug={event.slug} eventName={event.name} />
+            <Button
+              variant="outline"
+              render={
+                <Link
+                  href={`/${event.slug}`}
+                  target="_blank"
+                  rel="noreferrer"
+                />
+              }
+              nativeButton={false}
+            >
+              <span className="font-mono text-xs">/{event.slug}</span>
+              <ArrowUpRight data-icon="inline-end" />
+            </Button>
+          </div>
         </div>
       </div>
 
