@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -9,6 +9,7 @@ import {
   Check,
   Download,
   Inbox,
+  QrCode,
   ShieldCheck,
   Ticket,
   Trash2,
@@ -16,6 +17,7 @@ import {
   UserPlus,
   X,
 } from "lucide-react";
+import { QRCodeCanvas } from "qrcode.react";
 import { toast } from "sonner";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -33,6 +35,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -199,20 +209,23 @@ export default function ManageEvent({ id }: { id: Id<"events"> }) {
           <h1 className="font-heading text-3xl font-semibold tracking-[-0.02em]">
             {event.name}
           </h1>
-          <Button
-            variant="outline"
-            render={
-              <Link
-                href={`/${event.slug}`}
-                target="_blank"
-                rel="noreferrer"
-              />
-            }
-            nativeButton={false}
-          >
-            <span className="font-mono text-xs">/{event.slug}</span>
-            <ArrowUpRight data-icon="inline-end" />
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <EventQrDialog slug={event.slug} name={event.name} />
+            <Button
+              variant="outline"
+              render={
+                <Link
+                  href={`/${event.slug}`}
+                  target="_blank"
+                  rel="noreferrer"
+                />
+              }
+              nativeButton={false}
+            >
+              <span className="font-mono text-xs">/{event.slug}</span>
+              <ArrowUpRight data-icon="inline-end" />
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -362,6 +375,82 @@ export default function ManageEvent({ id }: { id: Id<"events"> }) {
 
       <EventAdminsCard eventId={id} />
     </div>
+  );
+}
+
+const subscribeNoop = () => () => {};
+
+function EventQrDialog({ slug, name }: { slug: string; name: string }) {
+  const canvasWrapRef = useRef<HTMLDivElement>(null);
+  const origin = useSyncExternalStore(
+    subscribeNoop,
+    () => window.location.origin,
+    () => ""
+  );
+
+  const claimUrl = origin ? `${origin}/${slug}` : `/${slug}`;
+
+  function downloadPng() {
+    const canvas = canvasWrapRef.current?.querySelector("canvas");
+    if (!canvas) return;
+    const link = document.createElement("a");
+    link.href = canvas.toDataURL("image/png");
+    link.download = `${slug}-claim-qr.png`;
+    link.click();
+  }
+
+  async function copyUrl() {
+    try {
+      await navigator.clipboard.writeText(claimUrl);
+      toast.success("Claim link copied");
+    } catch {
+      toast.error("Could not copy link");
+    }
+  }
+
+  return (
+    <Dialog>
+      <DialogTrigger render={<Button variant="outline" />}>
+        <QrCode data-icon="inline-start" />
+        QR code
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Claim page QR code</DialogTitle>
+          <DialogDescription>
+            Attendees scan this to open the claim page for {name}. Display it on
+            a slide or download it as a PNG.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-col items-center gap-4">
+          <div
+            ref={canvasWrapRef}
+            className="rounded-xl border border-border bg-white p-4"
+          >
+            <QRCodeCanvas
+              value={claimUrl}
+              size={256}
+              marginSize={2}
+              level="M"
+              aria-label={`QR code linking to the claim page for ${name}`}
+            />
+          </div>
+          <span className="break-all text-center font-mono text-xs text-muted-foreground">
+            {claimUrl}
+          </span>
+          <div className="flex w-full flex-wrap justify-center gap-2">
+            <Button variant="outline" size="sm" onClick={copyUrl}>
+              <Check data-icon="inline-start" />
+              Copy link
+            </Button>
+            <Button variant="secondary" size="sm" onClick={downloadPng}>
+              <Download data-icon="inline-start" />
+              Download PNG
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
