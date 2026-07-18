@@ -8,15 +8,11 @@ const TRAIL_RADIUS = 120;
 const OVERSCAN = TRAIL_RADIUS * 1.75;
 const LIGHT_DOT_COLOR = "rgba(185, 185, 185, 0.85)";
 const DARK_DOT_COLOR = "rgba(61, 61, 61, 0.765)";
-// Base per-frame trail decay; strong trails decay slower (up to TRAIL_DECAY_MAX)
-const TRAIL_DECAY = 0.895;
-const TRAIL_DECAY_MAX = 0.975;
-// Frame movement (px) at which the trail reaches full density
-const FULL_DENSITY_DIST = 30;
-const MAX_OFFSET = 44;
-const MAX_DENSITY = 42;
-const NOISE_AMPLITUDE = 0.25;
-const OFFSET_EASE = 0.15;
+// Impulse physics: the mouse imparts velocity kicks scaled by its speed
+const IMPULSE = 1.1;
+const MAX_SPEED = 120;
+const FRICTION = 0.9;
+const SPRING = 0.015;
 // Ambient swell: dots grow/shrink as slow waves travel across the grid
 const SWELL_MIN = 0.55;
 const SWELL_MAX = 1.36;
@@ -29,11 +25,9 @@ type Dot = {
   homeY: number;
   x: number;
   y: number;
-  dirX: number;
-  dirY: number;
-  density: number;
-  seedX: number;
-  seedY: number;
+  vx: number;
+  vy: number;
+  seed: number;
   r: number;
 };
 
@@ -86,11 +80,9 @@ export default function DotGridCanvas() {
             homeY: y,
             x,
             y,
-            dirX: 0,
-            dirY: 0,
-            density: 0,
-            seedX: Math.random() * Math.PI * 2,
-            seedY: Math.random() * Math.PI * 2,
+            vx: 0,
+            vy: 0,
+            seed: Math.random() * Math.PI * 2,
             r: DOT_RADIUS,
           });
         }
@@ -127,25 +119,14 @@ export default function DotGridCanvas() {
       const segLen = Math.hypot(segX, segY);
       const dirX = segLen > 0 ? segX / segLen : 1;
       const dirY = segLen > 0 ? segY / segLen : 0;
-      // Trail width scales with mouse speed: narrow when slow, wide when fast
-      const radius =
-        TRAIL_RADIUS *
-        (0.5 + Math.min(segLen / (FULL_DENSITY_DIST / 2), 2.5) * 0.5);
+      // Wider swath when the mouse moves fast
+      const radius = TRAIL_RADIUS * (0.5 + Math.min(segLen / 15, 2) * 0.5);
       for (const dot of dots) {
-        // Decay the stored trail field; stronger trails linger longer
-        const decay =
-          TRAIL_DECAY +
-          (TRAIL_DECAY_MAX - TRAIL_DECAY) *
-            Math.min(dot.density / MAX_DENSITY, 1);
-        dot.dirX *= decay;
-        dot.dirY *= decay;
-        dot.density *= decay;
-
-        // Inject density along the segment the mouse swept this frame
+        // Velocity kick from the segment the mouse swept this frame
         if (mouseActive && segLen > 0) {
           const t = Math.min(
             Math.max(
-              ((dot.homeX - prev.x) * segX + (dot.homeY - prev.y) * segY) /
+              ((dot.x - prev.x) * segX + (dot.y - prev.y) * segY) /
                 (segLen * segLen),
               0,
             ),
@@ -153,34 +134,28 @@ export default function DotGridCanvas() {
           );
           const cx = prev.x + segX * t;
           const cy = prev.y + segY * t;
-          const distToLine = Math.hypot(dot.homeX - cx, dot.homeY - cy);
+          const dx = dot.x - cx;
+          const dy = dot.y - cy;
+          const distToLine = Math.hypot(dx, dy);
           let s = 1 - smoothstep(radius, distToLine);
           s *= s;
-          const current =
-            Math.min(MAX_DENSITY, segLen / (FULL_DENSITY_DIST / 3)) * s;
-          if (current > 0) {
-            dot.dirX += dirX * current;
-            dot.dirY += dirY * current;
-            dot.density = Math.max(dot.density, current);
+          if (s > 0) {
+            const rx = distToLine > 0 ? dx / distToLine : 0;
+            const ry = distToLine > 0 ? dy / distToLine : 0;
+            const kick = segLen * IMPULSE * s;
+            // Push along the mouse's travel plus radially away from its path
+            dot.vx += (dirX * 0.7 + rx * 0.8) * kick;
+            dot.vy += (dirY * 0.7 + ry * 0.8) * kick;
+            const speed = Math.hypot(dot.vx, dot.vy);
+            if (speed > MAX_SPEED) {
+              dot.vx *= MAX_SPEED / speed;
+              dot.vy *= MAX_SPEED / speed;
+            }
           }
         }
 
-        // Displace along the trail direction, with noise scaled by strength
-        const strength = Math.min(dot.density, MAX_DENSITY);
         let targetX = dot.homeX;
         let targetY = dot.homeY;
-        if (strength > 0.001) {
-          const dLen = Math.hypot(dot.dirX, dot.dirY);
-          const nx = dLen > 0 ? dot.dirX / dLen : 0;
-          const ny = dLen > 0 ? dot.dirY / dLen : 0;
-          const wobbleX =
-            Math.sin(now * 6 + dot.seedX + strength * 3) * NOISE_AMPLITUDE;
-          const wobbleY =
-            Math.sin(now * 6 * 1.3 + dot.seedY + strength * 3) *
-            NOISE_AMPLITUDE;
-          targetX = dot.homeX + (nx + wobbleX) * strength * MAX_OFFSET;
-          targetY = dot.homeY + (ny + wobbleY) * strength * MAX_OFFSET;
-        }
         // Ambient swell traveling across the grid, like something moving underneath
         const wave =
           Math.sin(dot.homeX * 0.012 + now * 0.9) *
@@ -196,11 +171,13 @@ export default function DotGridCanvas() {
         targetY +=
           Math.cos(dot.homeY * 0.011 - now * 0.55) * DRIFT_AMPLITUDE * 0.6;
 
-        // Farther-flung dots ease back more slowly
-        const disp = Math.hypot(dot.x - dot.homeX, dot.y - dot.homeY);
-        const ease = OFFSET_EASE / (1 + disp / 80);
-        dot.x += (targetX - dot.x) * ease;
-        dot.y += (targetY - dot.y) * ease;
+        // Integrate: soft spring back toward the ambient target, with friction
+        dot.vx += (targetX - dot.x) * SPRING;
+        dot.vy += (targetY - dot.y) * SPRING;
+        dot.vx *= FRICTION;
+        dot.vy *= FRICTION;
+        dot.x += dot.vx;
+        dot.y += dot.vy;
 
       }
 
