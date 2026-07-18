@@ -159,7 +159,7 @@ export default function DotGridCanvas() {
         // Ambient swell traveling across the grid, like something moving underneath
         const wave =
           Math.sin(dot.homeX * 0.012 + now * 0.9) *
-            Math.sin(dot.homeY * 0.011 - now * 0.55) *
+            Math.sin(dot.homeY * 0.011 - now * 0.96) *
             0.5 +
           Math.sin((dot.homeX + dot.homeY) * 0.006 + now * 0.7) * 0.5;
         const swell = (wave + 1) / 2;
@@ -169,7 +169,7 @@ export default function DotGridCanvas() {
         targetX +=
           Math.cos(dot.homeX * 0.012 + now * 0.9) * DRIFT_AMPLITUDE;
         targetY +=
-          Math.cos(dot.homeY * 0.011 - now * 0.55) * DRIFT_AMPLITUDE * 0.6;
+          Math.cos(dot.homeY * 0.011 - now * 0.96) * DRIFT_AMPLITUDE * 0.6;
 
         // Integrate: soft spring back toward the ambient target, with friction
         dot.vx += (targetX - dot.x) * SPRING;
