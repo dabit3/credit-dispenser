@@ -8,7 +8,7 @@ const ATTRACT_RADIUS = 200;
 const ATTRACT_STRENGTH = 0.55;
 const EASE = 0.12;
 const OVERSCAN = ATTRACT_RADIUS;
-const HOVER_AMPLITUDE = 6;
+const HOVER_AMPLITUDE = 3;
 const LIGHT_DOT_COLOR = "#b9b9b9";
 
 type Dot = {
@@ -109,7 +109,7 @@ export default function DotGridCanvas() {
         if (dist < ATTRACT_RADIUS && dist > 0) {
           const pull = (1 - dist / ATTRACT_RADIUS) * ATTRACT_STRENGTH;
           const wobble = HOVER_AMPLITUDE * pull;
-          const t = now * dot.speed * 2 + dot.phase;
+          const t = now * dot.speed * 1.2 + dot.phase;
           targetX = dot.homeX + dx * pull + Math.cos(t) * wobble;
           targetY = dot.homeY + dy * pull + Math.sin(t * 1.3) * wobble;
           settled = false;
