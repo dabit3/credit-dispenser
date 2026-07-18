@@ -14,7 +14,7 @@ const TRAIL_DECAY_MAX = 0.975;
 // Frame movement (px) at which the trail reaches full density
 const FULL_DENSITY_DIST = 30;
 const MAX_OFFSET = 44;
-const MAX_DENSITY = 21;
+const MAX_DENSITY = 42;
 const NOISE_AMPLITUDE = 0.25;
 const OFFSET_EASE = 0.15;
 // Ambient swell: dots grow/shrink as slow waves travel across the grid
@@ -22,7 +22,7 @@ const SWELL_MIN = 0.55;
 const SWELL_MAX = 1.36;
 const SWELL_LIFT = 4;
 // Dots drift counter to the swell wave's direction of travel
-const DRIFT_AMPLITUDE = 3.5;
+const DRIFT_AMPLITUDE = 6;
 
 type Dot = {
   homeX: number;
