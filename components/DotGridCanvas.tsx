@@ -5,7 +5,7 @@ import { useEffect, useRef } from "react";
 const GRID_SIZE = 17;
 const DOT_RADIUS = 1;
 const TRAIL_RADIUS = 120;
-const OVERSCAN = TRAIL_RADIUS;
+const OVERSCAN = TRAIL_RADIUS * 1.75;
 const LIGHT_DOT_COLOR = "#b9b9b9";
 const DARK_DOT_COLOR = "rgba(61, 61, 61, 0.9)";
 // Trail field decays ~10.5% per frame, matching pow(0.33, 0.1)
@@ -13,9 +13,9 @@ const TRAIL_DECAY = 0.895;
 // Frame movement (px) at which the trail reaches full density
 const FULL_DENSITY_DIST = 30;
 const MAX_OFFSET = 44;
-const MAX_DENSITY = 2.5;
+const MAX_DENSITY = 4;
 const NOISE_AMPLITUDE = 0.25;
-const OFFSET_EASE = 0.25;
+const OFFSET_EASE = 0.18;
 
 type Dot = {
   homeX: number;
@@ -118,9 +118,10 @@ export default function DotGridCanvas() {
       const segLen = Math.hypot(segX, segY);
       const dirX = segLen > 0 ? segX / segLen : 1;
       const dirY = segLen > 0 ? segY / segLen : 0;
-      // Slow movement paints a narrower trail
+      // Trail width scales with mouse speed: narrow when slow, wide when fast
       const radius =
-        TRAIL_RADIUS * (0.5 + 0.5 * Math.min(segLen / (FULL_DENSITY_DIST / 2), 1));
+        TRAIL_RADIUS *
+        (0.5 + Math.min(segLen / (FULL_DENSITY_DIST / 2), 2.5) * 0.5);
       let settled = true;
 
       for (const dot of dots) {
