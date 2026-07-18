@@ -4,15 +4,13 @@ import { useEffect, useRef } from "react";
 
 const GRID_SIZE = 28;
 const DOT_RADIUS = 1;
-const ATTRACT_RADIUS = 200;
-const ATTRACT_STRENGTH = 0.55;
-const EASE = 0.12;
-const OVERSCAN = ATTRACT_RADIUS;
-const HOVER_AMPLITUDE = 3;
+const DISRUPT_RADIUS = 160;
+const EASE = 0.06;
+const OVERSCAN = DISRUPT_RADIUS;
 const LIGHT_DOT_COLOR = "#b9b9b9";
 const DARK_DOT_COLOR = "#3d3d3d";
-const SCATTER_SPEED_MIN = 1.2;
-const SCATTER_FORCE = 0.16;
+const DISRUPT_FORCE = 0.35;
+const MAX_MOUSE_SPEED = 5;
 const VELOCITY_DAMPING = 0.9;
 
 type Dot = {
@@ -22,8 +20,6 @@ type Dot = {
   y: number;
   vx: number;
   vy: number;
-  phase: number;
-  speed: number;
 };
 
 export default function DotGridCanvas() {
@@ -65,16 +61,7 @@ export default function DotGridCanvas() {
           x < width + OVERSCAN;
           x += GRID_SIZE
         ) {
-          dots.push({
-            homeX: x,
-            homeY: y,
-            x,
-            y,
-            vx: 0,
-            vy: 0,
-            phase: Math.random() * Math.PI * 2,
-            speed: 0.8 + Math.random() * 0.7,
-          });
+          dots.push({ homeX: x, homeY: y, x, y, vx: 0, vy: 0 });
         }
       }
     };
@@ -102,43 +89,30 @@ export default function DotGridCanvas() {
     };
 
     const step = () => {
-      const now = performance.now() / 1000;
-      const mouseActive = mouse.x > -1e3;
-      const mouseSpeed = Math.hypot(mouse.vx, mouse.vy);
+      const mouseSpeed = Math.min(
+        Math.hypot(mouse.vx, mouse.vy),
+        MAX_MOUSE_SPEED,
+      );
       let settled = true;
       for (const dot of dots) {
-        const dx = mouse.x - dot.homeX;
-        const dy = mouse.y - dot.homeY;
-        const dist = Math.hypot(dx, dy);
-        let targetX = dot.homeX;
-        let targetY = dot.homeY;
-        if (dist < ATTRACT_RADIUS && dist > 0) {
-          const pull = (1 - dist / ATTRACT_RADIUS) * ATTRACT_STRENGTH;
-          const wobble = HOVER_AMPLITUDE * pull;
-          const t = now * dot.speed * 1.2 + dot.phase;
-          targetX = dot.homeX + dx * pull + Math.cos(t) * wobble;
-          targetY = dot.homeY + dy * pull + Math.sin(t * 1.3) * wobble;
-          settled = false;
+        if (mouseSpeed > 0.01) {
+          const cx = dot.x - mouse.x;
+          const cy = dot.y - mouse.y;
+          const cdist = Math.hypot(cx, cy);
+          if (cdist < DISRUPT_RADIUS && cdist > 0) {
+            const falloff = 1 - cdist / DISRUPT_RADIUS;
+            const kick = mouseSpeed * DISRUPT_FORCE * falloff;
+            dot.vx += (cx / cdist) * kick + mouse.vx * 0.12 * falloff;
+            dot.vy += (cy / cdist) * kick + mouse.vy * 0.12 * falloff;
+          }
         }
-        if (mouseSpeed > SCATTER_SPEED_MIN && dist < ATTRACT_RADIUS) {
-          const cx = mouse.x - dot.x;
-          const cy = mouse.y - dot.y;
-          const cdist = Math.hypot(cx, cy) || 1;
-          const falloff = 1 - dist / ATTRACT_RADIUS;
-          const kick =
-            Math.min(mouseSpeed - SCATTER_SPEED_MIN, 6) *
-            SCATTER_FORCE *
-            falloff;
-          dot.vx += (-cx / cdist) * kick + mouse.vx * 0.05 * falloff;
-          dot.vy += (-cy / cdist) * kick + mouse.vy * 0.05 * falloff;
-        }
-        dot.vx = (dot.vx + (targetX - dot.x) * EASE) * VELOCITY_DAMPING;
-        dot.vy = (dot.vy + (targetY - dot.y) * EASE) * VELOCITY_DAMPING;
+        dot.vx = (dot.vx + (dot.homeX - dot.x) * EASE) * VELOCITY_DAMPING;
+        dot.vy = (dot.vy + (dot.homeY - dot.y) * EASE) * VELOCITY_DAMPING;
         dot.x += dot.vx;
         dot.y += dot.vy;
         if (
-          Math.abs(targetX - dot.x) > 0.05 ||
-          Math.abs(targetY - dot.y) > 0.05 ||
+          Math.abs(dot.homeX - dot.x) > 0.05 ||
+          Math.abs(dot.homeY - dot.y) > 0.05 ||
           Math.abs(dot.vx) > 0.02 ||
           Math.abs(dot.vy) > 0.02
         ) {
@@ -148,7 +122,7 @@ export default function DotGridCanvas() {
       mouse.vx *= 0.8;
       mouse.vy *= 0.8;
       draw();
-      if (settled && !mouseActive) {
+      if (settled) {
         running = false;
         return;
       }
