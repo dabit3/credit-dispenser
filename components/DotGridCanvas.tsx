@@ -6,8 +6,8 @@ const GRID_SIZE = 17;
 const DOT_RADIUS = 1;
 const TRAIL_RADIUS = 120;
 const OVERSCAN = TRAIL_RADIUS * 1.75;
-const LIGHT_DOT_COLOR = "#b9b9b9";
-const DARK_DOT_COLOR = "rgba(61, 61, 61, 0.9)";
+const LIGHT_DOT_COLOR = "rgba(185, 185, 185, 0.85)";
+const DARK_DOT_COLOR = "rgba(61, 61, 61, 0.765)";
 // Base per-frame trail decay; strong trails decay slower (up to TRAIL_DECAY_MAX)
 const TRAIL_DECAY = 0.895;
 const TRAIL_DECAY_MAX = 0.975;
