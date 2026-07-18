@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
-const GRID_SIZE = 28;
+const GRID_SIZE = 14;
 const DOT_RADIUS = 1;
 const TRAIL_RADIUS = 120;
 const OVERSCAN = TRAIL_RADIUS;
@@ -13,6 +13,7 @@ const TRAIL_DECAY = 0.895;
 // Frame movement (px) at which the trail reaches full density
 const FULL_DENSITY_DIST = 30;
 const MAX_OFFSET = 44;
+const MAX_DENSITY = 2.5;
 const NOISE_AMPLITUDE = 0.25;
 const OFFSET_EASE = 0.25;
 
@@ -143,7 +144,8 @@ export default function DotGridCanvas() {
           const distToLine = Math.hypot(dot.homeX - cx, dot.homeY - cy);
           let s = 1 - smoothstep(radius, distToLine);
           s *= s;
-          const current = Math.min(1, segLen / (FULL_DENSITY_DIST / 3)) * s;
+          const current =
+            Math.min(MAX_DENSITY, segLen / (FULL_DENSITY_DIST / 3)) * s;
           if (current > 0) {
             dot.dirX += dirX * current;
             dot.dirY += dirY * current;
@@ -152,7 +154,7 @@ export default function DotGridCanvas() {
         }
 
         // Displace along the trail direction, with noise scaled by strength
-        const strength = Math.min(dot.density, 1);
+        const strength = Math.min(dot.density, MAX_DENSITY);
         let targetX = dot.homeX;
         let targetY = dot.homeY;
         if (strength > 0.001) {
