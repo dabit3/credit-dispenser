@@ -14,13 +14,15 @@ const TRAIL_DECAY_MAX = 0.975;
 // Frame movement (px) at which the trail reaches full density
 const FULL_DENSITY_DIST = 30;
 const MAX_OFFSET = 44;
-const MAX_DENSITY = 14;
+const MAX_DENSITY = 21;
 const NOISE_AMPLITUDE = 0.25;
 const OFFSET_EASE = 0.15;
 // Ambient swell: dots grow/shrink as slow waves travel across the grid
 const SWELL_MIN = 0.55;
 const SWELL_MAX = 1.36;
 const SWELL_LIFT = 4;
+// Dots drift counter to the swell wave's direction of travel
+const DRIFT_AMPLITUDE = 3.5;
 
 type Dot = {
   homeX: number;
@@ -188,6 +190,11 @@ export default function DotGridCanvas() {
         const swell = (wave + 1) / 2;
         dot.r = DOT_RADIUS * (SWELL_MIN + (SWELL_MAX - SWELL_MIN) * swell);
         targetY -= swell * SWELL_LIFT;
+        // Positional drift counter to the swell's travel direction
+        targetX +=
+          Math.cos(dot.homeX * 0.012 + now * 0.9) * DRIFT_AMPLITUDE;
+        targetY +=
+          Math.cos(dot.homeY * 0.011 - now * 0.55) * DRIFT_AMPLITUDE * 0.6;
 
         // Farther-flung dots ease back more slowly
         const disp = Math.hypot(dot.x - dot.homeX, dot.y - dot.homeY);
