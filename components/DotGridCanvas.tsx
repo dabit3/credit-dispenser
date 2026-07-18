@@ -10,13 +10,17 @@ const LIGHT_DOT_COLOR = "#b9b9b9";
 const DARK_DOT_COLOR = "rgba(61, 61, 61, 0.9)";
 // Base per-frame trail decay; strong trails decay slower (up to TRAIL_DECAY_MAX)
 const TRAIL_DECAY = 0.895;
-const TRAIL_DECAY_MAX = 0.965;
+const TRAIL_DECAY_MAX = 0.975;
 // Frame movement (px) at which the trail reaches full density
 const FULL_DENSITY_DIST = 30;
 const MAX_OFFSET = 44;
-const MAX_DENSITY = 8;
+const MAX_DENSITY = 14;
 const NOISE_AMPLITUDE = 0.25;
-const OFFSET_EASE = 0.18;
+const OFFSET_EASE = 0.15;
+// Ambient swell: dots grow/shrink as slow waves travel across the grid
+const SWELL_MIN = 0.55;
+const SWELL_MAX = 2.1;
+const SWELL_LIFT = 4;
 
 type Dot = {
   homeX: number;
@@ -28,6 +32,7 @@ type Dot = {
   density: number;
   seedX: number;
   seedY: number;
+  r: number;
 };
 
 const smoothstep = (edge: number, x: number) => {
@@ -84,6 +89,7 @@ export default function DotGridCanvas() {
             density: 0,
             seedX: Math.random() * Math.PI * 2,
             seedY: Math.random() * Math.PI * 2,
+            r: DOT_RADIUS,
           });
         }
       }
@@ -106,7 +112,7 @@ export default function DotGridCanvas() {
       ctx.fillStyle = dotColor;
       for (const dot of dots) {
         ctx.beginPath();
-        ctx.arc(dot.x, dot.y, DOT_RADIUS, 0, Math.PI * 2);
+        ctx.arc(dot.x, dot.y, dot.r, 0, Math.PI * 2);
         ctx.fill();
       }
     };
@@ -123,8 +129,6 @@ export default function DotGridCanvas() {
       const radius =
         TRAIL_RADIUS *
         (0.5 + Math.min(segLen / (FULL_DENSITY_DIST / 2), 2.5) * 0.5);
-      let settled = true;
-
       for (const dot of dots) {
         // Decay the stored trail field; stronger trails linger longer
         const decay =
@@ -175,28 +179,27 @@ export default function DotGridCanvas() {
           targetX = dot.homeX + (nx + wobbleX) * strength * MAX_OFFSET;
           targetY = dot.homeY + (ny + wobbleY) * strength * MAX_OFFSET;
         }
+        // Ambient swell traveling across the grid, like something moving underneath
+        const wave =
+          Math.sin(dot.homeX * 0.012 + now * 0.9) *
+            Math.sin(dot.homeY * 0.011 - now * 0.55) *
+            0.5 +
+          Math.sin((dot.homeX + dot.homeY) * 0.006 + now * 0.7) * 0.5;
+        const swell = (wave + 1) / 2;
+        dot.r = DOT_RADIUS * (SWELL_MIN + (SWELL_MAX - SWELL_MIN) * swell);
+        targetY -= swell * SWELL_LIFT;
+
         // Farther-flung dots ease back more slowly
         const disp = Math.hypot(dot.x - dot.homeX, dot.y - dot.homeY);
-        const ease = OFFSET_EASE / (1 + disp / 60);
+        const ease = OFFSET_EASE / (1 + disp / 80);
         dot.x += (targetX - dot.x) * ease;
         dot.y += (targetY - dot.y) * ease;
 
-        if (
-          strength > 0.001 ||
-          Math.abs(dot.x - dot.homeX) > 0.05 ||
-          Math.abs(dot.y - dot.homeY) > 0.05
-        ) {
-          settled = false;
-        }
       }
 
       prev.x = mouse.x;
       prev.y = mouse.y;
       draw();
-      if (settled) {
-        running = false;
-        return;
-      }
       raf = requestAnimationFrame(step);
     };
 
@@ -206,6 +209,18 @@ export default function DotGridCanvas() {
         raf = requestAnimationFrame(step);
       }
     };
+
+    // Ambient swell runs continuously; pause when off-screen
+    const visObserver = new IntersectionObserver((entries) => {
+      const visible = entries.some((entry) => entry.isIntersecting);
+      if (visible) {
+        wake();
+      } else {
+        cancelAnimationFrame(raf);
+        running = false;
+      }
+    });
+    visObserver.observe(parent);
 
     const onPointerMove = (e: PointerEvent) => {
       const rect = parent.getBoundingClientRect();
@@ -217,7 +232,6 @@ export default function DotGridCanvas() {
       }
       mouse.x = x;
       mouse.y = y;
-      wake();
     };
 
     const onPointerLeave = () => {
@@ -225,7 +239,6 @@ export default function DotGridCanvas() {
       mouse.y = -1e4;
       prev.x = -1e4;
       prev.y = -1e4;
-      wake();
     };
 
     readColor();
@@ -248,6 +261,7 @@ export default function DotGridCanvas() {
 
     return () => {
       cancelAnimationFrame(raf);
+      visObserver.disconnect();
       resizeObserver.disconnect();
       themeObserver.disconnect();
       parent.removeEventListener("pointermove", onPointerMove);
