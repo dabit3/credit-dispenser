@@ -17,6 +17,7 @@ export default function AdminNav() {
   // The global admin list is only relevant (and only accessible) to global admins.
   const links = [
     { href: "/admin", label: "Events" },
+    { href: "/admin/analytics", label: "Analytics" },
     ...(access?.isGlobalAdmin
       ? [{ href: "/admin/admins", label: "Admins" }]
       : []),
