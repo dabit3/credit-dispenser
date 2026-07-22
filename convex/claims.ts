@@ -1,5 +1,39 @@
-import { mutation } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+
+export const myCodes = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return null;
+    }
+    const email = identity.email?.trim().toLowerCase();
+    if (!email || identity.emailVerified !== true) {
+      return [];
+    }
+
+    const claimed = await ctx.db
+      .query("codes")
+      .withIndex("by_claimedBy", (q) => q.eq("claimedBy", email))
+      .collect();
+
+    const results = await Promise.all(
+      claimed.map(async (code) => {
+        const event = await ctx.db.get(code.eventId);
+        return {
+          code: code.code,
+          claimedAt: code.claimedAt,
+          eventName: event?.name ?? "Deleted event",
+          eventSlug: event?.slug,
+          creditAmount: event?.creditAmount,
+          eventDate: event?.eventDate,
+        };
+      })
+    );
+    return results.sort((a, b) => (b.claimedAt ?? 0) - (a.claimedAt ?? 0));
+  },
+});
 
 export const claim = mutation({
   args: { slug: v.string() },
